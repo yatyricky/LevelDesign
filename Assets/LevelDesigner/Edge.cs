@@ -28,13 +28,13 @@ namespace LevelDesigner
             switch (Type)
             {
                 case EdgeType.Undirected:
-                    return $"{From.Name}-{To.Name}";
+                    return $"{From.Name}--{To.Name}";
                 case EdgeType.Directed:
                     return $"{From.Name}->{To.Name}";
                 case EdgeType.ShortCut:
-                    return $"{From.Name}->-{To.Name}";
+                    return $"{From.Name}>>{To.Name}";
                 case EdgeType.Mechanism:
-                    return $"{From.Name}*->{To.Name}";
+                    return $"{From.Name}*>{To.Name}";
                 default:
                     throw new ArgumentOutOfRangeException();
             }

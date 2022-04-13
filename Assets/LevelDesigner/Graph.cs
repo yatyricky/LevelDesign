@@ -1,9 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using UnityEngine;
-using UnityEngine.UI;
 
 namespace LevelDesigner
 {
@@ -12,15 +10,125 @@ namespace LevelDesigner
         public List<Vertex> Vertices = new List<Vertex>();
         public List<Edge> Edges = new List<Edge>();
 
+        /// <summary>
+        /// A--B
+        /// A->B
+        /// C>>B
+        /// D*>A
+        /// </summary>
+        /// <param name="source"></param>
+        /// <returns></returns>
+        public static Graph Parse(string source)
+        {
+            var verts = new HashSet<string>();
+            var g = new Graph();
+            var i = 0;
+            var buffer = new StringBuilder();
+            var s = 0; // 0:expect id 1:expect edge
+            EdgeType? edge = null;
+            string prev = null;
+
+            while (i < source.Length + 1)
+            {
+                var c = i < source.Length ? source[i] : '\0';
+                var isWhiteSpace = c == ' ' || c == '\n' || c == '\r' || c == '\t';
+                var isEdge = c == '-' || c == '>' || c == '*';
+                var isEof = c == '\0';
+                switch (s)
+                {
+                    case 0:
+                        if (isWhiteSpace || isEdge || isEof)
+                        {
+                            if (buffer.Length > 0)
+                            {
+                                var id = buffer.ToString();
+                                buffer.Clear();
+                                if (isEdge)
+                                {
+                                    buffer.Append(c);
+                                }
+
+                                if (!verts.Contains(id))
+                                {
+                                    verts.Add(id);
+                                    g.AddVertex(id);
+                                }
+
+                                if (edge == null)
+                                {
+                                    prev = g.GetVertex(id).Name;
+                                    s = 1;
+                                }
+                                else
+                                {
+                                    g.AddEdge(prev, id, edge.Value);
+                                    prev = null;
+                                    edge = null;
+                                }
+                            }
+                        }
+                        else
+                        {
+                            buffer.Append(c);
+                        }
+
+                        break;
+                    case 1:
+                        if (isEdge)
+                        {
+                            buffer.Append(c);
+                        }
+                        else
+                        {
+                            var id = buffer.ToString();
+                            buffer.Clear();
+                            if (!isWhiteSpace && !isEof)
+                            {
+                                buffer.Append(c);
+                            }
+
+                            switch (id)
+                            {
+                                case "--":
+                                    edge = EdgeType.Undirected;
+                                    break;
+                                case "->":
+                                    edge = EdgeType.Directed;
+                                    break;
+                                case ">>":
+                                    edge = EdgeType.ShortCut;
+                                    break;
+                                case "*>":
+                                    edge = EdgeType.Mechanism;
+                                    break;
+                                default:
+                                    edge = EdgeType.Undirected;
+                                    Debug.LogError($"Unknown connector {id}");
+                                    break;
+                            }
+
+                            s = 0;
+                        }
+
+                        break;
+                }
+
+                i++;
+            }
+
+            return g;
+        }
+
         private Vertex GetVertex(string name)
         {
             return Vertices.First(node => node.Name == name);
         }
 
-        public void AddVertex(string name, float weight = 1f)
+        public Vertex AddVertex(string name, float weight = 1f)
         {
-            var node = new Vertex(name, weight);
-            Vertices.Add(node);
+            var vertex = new Vertex(name, weight);
+            Vertices.Add(vertex);
+            return vertex;
         }
 
         public void AddEdge(string from, string to, EdgeType type = EdgeType.Undirected)
@@ -184,7 +292,7 @@ namespace LevelDesigner
             for (var i = 1; i <= n; i++)
             {
                 var inv = 1f / Algorithm.Factorial(i);
-                top += inv*CalculateNthOrderCheeger(i);
+                top += inv * CalculateNthOrderCheeger(i);
                 bottom += inv;
             }
 
@@ -193,24 +301,25 @@ namespace LevelDesigner
 
         public override string ToString()
         {
-            var sb = new StringBuilder();
-            sb.Append("V:{");
-            foreach (var node in Vertices)
-            {
-                sb.Append(node);
-                sb.Append(' ');
-            }
-
-            sb.Append("}\n");
-            sb.Append("E:{");
-            foreach (var edge in Edges)
-            {
-                sb.Append(edge);
-                sb.Append(' ');
-            }
-
-            sb.Append("}");
-            return sb.ToString();
+            // var sb = new StringBuilder();
+            // sb.Append("V:{");
+            // foreach (var node in Vertices)
+            // {
+            //     sb.Append(node);
+            //     sb.Append(' ');
+            // }
+            //
+            // sb.Append("}\n");
+            // sb.Append("E:{");
+            // foreach (var edge in Edges)
+            // {
+            //     sb.Append(edge);
+            //     sb.Append(' ');
+            // }
+            //
+            // sb.Append("}");
+            // return sb.ToString();
+            return string.Join("\n", from edge in Edges select edge.ToString());
         }
 
         public Graph Clone()
