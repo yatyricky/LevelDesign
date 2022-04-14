@@ -20,13 +20,16 @@ namespace LevelDesigner
 
         public Transform nodes;
         public Transform edges;
-        public TextAsset source;
-
         public GameObject nodePrefab;
         public GameObject edgePrefab;
         public NodePos[] nodePos;
 
-        [Button]
+        [BoxGroup("主要功能操作区域")]
+        [LabelText("配置")]
+        public TextAsset source;
+
+        [BoxGroup("主要功能操作区域")]
+        [Button("加载配置")]
         public void LoadFromSource()
         {
             if (source == null)
@@ -38,7 +41,8 @@ namespace LevelDesigner
             ResetWithGraph(g);
         }
 
-        [Button]
+        [BoxGroup("主要功能操作区域")]
+        [Button("导出配置(会生成新文件)")]
         public void ExportSource()
         {
             var graph = ToVirtualGraph();
@@ -77,22 +81,6 @@ namespace LevelDesigner
             }
         }
 
-        [Button]
-        public NodeEditor AddNode()
-        {
-            var go = Instantiate(nodePrefab, nodes, true);
-            go.name = $"Node{nodes.childCount}";
-            return go.GetComponent<NodeEditor>();
-        }
-
-        [Button]
-        public EdgeEditor AddEdge()
-        {
-            var go = Instantiate(edgePrefab, edges, true);
-            go.name = $"Edge{edges.childCount}";
-            return go.GetComponent<EdgeEditor>();
-        }
-
         private Graph ToVirtualGraph()
         {
             var graph = new Graph();
@@ -111,14 +99,34 @@ namespace LevelDesigner
             return graph;
         }
 
-        [Button]
+        [BoxGroup("主要功能操作区域")]
+        [Button("计算γ3")]
         public void CalculateThirdOrderStabilityFactor()
         {
             var graph = ToVirtualGraph();
             Debug.Log(graph.CalculateNthOrderStabilityFactor(3));
         }
 
-        [Button]
+        [BoxGroup("主要功能操作区域")]
+        [Button("新增点")]
+        public NodeEditor AddNode()
+        {
+            var go = Instantiate(nodePrefab, nodes, true);
+            go.name = $"Node{nodes.childCount}";
+            return go.GetComponent<NodeEditor>();
+        }
+
+        [BoxGroup("主要功能操作区域")]
+        [Button("新增边")]
+        public EdgeEditor AddEdge()
+        {
+            var go = Instantiate(edgePrefab, edges, true);
+            go.name = $"Edge{edges.childCount}";
+            return go.GetComponent<EdgeEditor>();
+        }
+
+        [BoxGroup("主要功能操作区域")]
+        [Button("所有点的y轴归零")]
         public void FlattenNodes()
         {
             foreach (Transform node in nodes)
