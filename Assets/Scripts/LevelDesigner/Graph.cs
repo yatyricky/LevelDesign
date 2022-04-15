@@ -244,7 +244,7 @@ namespace LevelDesigner
             {
                 for (var n = 1; n < Vertices.Count; n++)
                 {
-                    var combs = Algorithm.GetCombinations(Vertices, n);
+                    var combs = MathUtils.GetCombinations(Vertices, n);
                     foreach (var comb in combs)
                     {
                         var g = Clone();
@@ -266,7 +266,7 @@ namespace LevelDesigner
 
         public float CalculateNthOrderCheeger(int n)
         {
-            var combs = Algorithm.GetCombinations(Vertices, n);
+            var combs = MathUtils.GetCombinations(Vertices, n);
             var count = 0;
             foreach (var comb in combs)
             {
@@ -291,7 +291,7 @@ namespace LevelDesigner
             var bottom = 0f;
             for (var i = 1; i <= n; i++)
             {
-                var inv = 1f / Algorithm.Factorial(i);
+                var inv = 1f / MathUtils.Factorial(i);
                 top += inv * CalculateNthOrderCheeger(i);
                 bottom += inv;
             }

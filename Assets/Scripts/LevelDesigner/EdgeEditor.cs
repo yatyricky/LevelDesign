@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using UnityEngine;
 
 namespace LevelDesigner
@@ -7,17 +6,15 @@ namespace LevelDesigner
     [ExecuteAlways]
     public class EdgeEditor : MonoBehaviour
     {
-        private const float ConeSize = 0.5f;
+        private const float ConeSize = 0.4f;
+        private const float DotSize = 0.2f;
+        private const int Points = 20;
 
         public NodeEditor from;
         public NodeEditor to;
         public EdgeType type;
-        public float bias;
-
-        // private readonly Gradient _white = InitGradient(Color.white);
-        // private readonly Gradient _green = InitGradient(Color.green);
-        // private readonly Gradient _yellow = InitGradient(Color.yellow);
-        // private readonly Gradient _red = InitGradient(Color.red);
+        public float strength;
+        public float angle;
 
         private LineRenderer _lr;
         private Transform _cone;
@@ -39,23 +36,90 @@ namespace LevelDesigner
                 return;
             }
 
-            var positions = new List<Vector3>();
             var pStart = from.transform.position;
             var pEnd = to.transform.position;
-            var dir = (pEnd - pStart).normalized;
-            var start = pStart + dir * (from.weight * 0.5f);
-            var end = pEnd - dir * (to.weight * 0.5f);
-            var rotated = Quaternion.Euler(0, 90, 0) * dir;
-            rotated *= bias;
-            var mid = start + (end - start) * 0.5f + rotated;
-            positions.Add(start);
-            positions.Add(mid);
-            positions.Add(end);
-            var coneDir1 = (mid - start).normalized;
-            var coneDir2 = (end - mid).normalized;
-            var coneStart = start + coneDir1 * ConeSize;
-            var coneEnd = end - coneDir2 * ConeSize;
-            var targetRot = Quaternion.LookRotation(coneDir2, Vector3.up);
+            var ws = from.weight * 0.5f;
+            var we = to.weight * 0.5f;
+            var qAngle = Quaternion.Euler(0f, angle, 0f);
+            var start = pStart;
+            var end = pEnd;
+            Vector3 p1, p2;
+
+            if (from == to)
+            {
+                strength = Mathf.Max(strength, 2f);
+
+                var dir = qAngle * Vector3.forward;
+                var r = dir * ws;
+                start += r;
+                end = start;
+
+                var p1VNorm = Quaternion.AngleAxis(45, Vector3.up) * dir;
+                var p1V = p1VNorm * (ws * strength);
+                p1 = start + p1V;
+
+                var p2VNorm = Quaternion.AngleAxis(-45, Vector3.up) * dir;
+                var p2V = p2VNorm * (ws * strength);
+                p2 = start + p2V;
+            }
+            else
+            {
+                strength = 2f;
+
+                var v = end - start;
+                var d = v.magnitude;
+
+                var dir = v.normalized;
+                var pLen = Math.Max(d - ws - we, 0f) * 0.5f;
+
+                var p1VNorm = qAngle * dir;
+                var p1V = p1VNorm * ((pLen + ws) / Mathf.Cos(angle * Mathf.Deg2Rad));
+                p1 = start + p1V;
+                p2 = p1;
+            }
+
+            _lr.positionCount = Points;
+            var positions = new Vector3[Points];
+            for (var i = 0; i < Points; i++)
+            {
+                positions[i] = MathUtils.BezierCubic(start, end, p1, p2, (float) i / (Points - 1));
+            }
+
+            var coneIndex = Points - 2;
+            var dotIndex = 0;
+            if (type == EdgeType.ShortCut)
+            {
+                coneIndex = Points / 2 - 3;
+            }
+            else
+            {
+                for (var i = Points - 2; i >= 0; i--)
+                {
+                    var p = positions[i];
+                    if (Vector3.Distance(p, pEnd) <= we + ConeSize)
+                        continue;
+
+                    coneIndex = i;
+                    break;
+                }
+
+                for (var i = 0; i < Points - 1; i++)
+                {
+                    var p = positions[i];
+                    if (Vector3.Distance(p, pStart) <= ws + DotSize)
+                        continue;
+
+                    dotIndex = i;
+                    break;
+                }
+            }
+
+            var conePos = positions[coneIndex];
+            var coneRot = Quaternion.LookRotation(positions[coneIndex + 1] - conePos, Vector3.up);
+            var dotPos = positions[dotIndex];
+
+            _lr.SetPositions(positions);
+
             switch (type)
             {
                 case EdgeType.Undirected:
@@ -63,21 +127,21 @@ namespace LevelDesigner
                     _dot.gameObject.SetActive(false);
                     break;
                 case EdgeType.Directed:
-                    _cone.position = coneEnd;
-                    _cone.rotation = targetRot;
+                    _cone.position = conePos;
+                    _cone.rotation = coneRot;
                     _cone.gameObject.SetActive(true);
                     _dot.gameObject.SetActive(false);
                     break;
                 case EdgeType.ShortCut:
-                    _cone.position = mid;
-                    _cone.rotation = targetRot;
+                    _cone.position = conePos;
+                    _cone.rotation = coneRot;
                     _cone.gameObject.SetActive(true);
                     _dot.gameObject.SetActive(false);
                     break;
                 case EdgeType.Mechanism:
-                    _cone.position = coneEnd;
-                    _cone.rotation = targetRot;
-                    _dot.position = coneStart;
+                    _cone.position = conePos;
+                    _cone.rotation = coneRot;
+                    _dot.position = dotPos;
                     _cone.gameObject.SetActive(true);
                     _dot.gameObject.SetActive(true);
                     break;
@@ -87,27 +151,8 @@ namespace LevelDesigner
 
             _lr.startWidth = 0.1f;
             _lr.endWidth = 0.1f;
-            _lr.positionCount = positions.Count;
-            _lr.SetPositions(positions.ToArray());
 
             name = $"{from.name}-{to.name}";
         }
-
-        // private static Gradient InitGradient(Color color)
-        // {
-        //     var gradient = new Gradient();
-        //     var colorKey = new GradientColorKey[2];
-        //     colorKey[0].color = Color.white;
-        //     colorKey[0].time = 0f;
-        //     colorKey[1].color = color;
-        //     colorKey[1].time = 1f;
-        //     var alphaKey = new GradientAlphaKey[2];
-        //     alphaKey[0].alpha = 1f;
-        //     alphaKey[0].time = 0f;
-        //     alphaKey[1].alpha = 1f;
-        //     alphaKey[1].time = 1f;
-        //     gradient.SetKeys(colorKey, alphaKey);
-        //     return gradient;
-        // }
     }
 }
