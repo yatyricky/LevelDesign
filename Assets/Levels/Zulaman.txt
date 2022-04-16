@@ -1,39 +1,74 @@
-Wreck -- Gate
-Gate -- Ritual
-Gate -- Tinker
-Tinker -- Library
-Library -- GateWallW
-Library -- Stream
-Stream -- Witch
-Stream -- LShrineW
-Witch -- Swamp
-Swamp -> LShrineE
-Swamp -- HShrine
-HShrine >> Gate
-HShrine -- Altar2
-Altar2 -- WaterEle
-Altar2 -- Sentinel
-Sentinel >> FoundryW
-Sentinel -> FoundryE
-Sentinel -- GateWallE
-FoundryE -- FoundryW
-FoundryW -- Warlock
-FoundryW *> Misty
-Misty -- Dracolich
-Misty -- CatacombE
-Misty >> CatacombW
-CatacombW -- CatacombE
-CatacombW -- Beetle
-Beetle -- UTunnel
-UTunnel -- WallN
-WallN -- Hydra
-Catapult -> WallN
-Catapult -- Hydra
-Hydra -- Guard
-Guard -- Altar4
-Altar4 >> LShrineN
-Altar4 -- Ghost
-LShrineN >> HShrine
-Hex *> LShrineN
-Ghost -- Hex
-Hex -- Ancient
+Wreck--Gate #angle:0.00 strength:2.00
+Gate--Ritual #angle:0.00 strength:2.00
+Gate--Tinker #angle:0.00 strength:2.00
+Tinker--Library #angle:0.00 strength:2.00
+Library--GateWallW #angle:0.00 strength:2.00
+Library--Stream #angle:0.00 strength:2.00
+Stream--Witch #angle:0.00 strength:2.00
+Stream--LShrineW #angle:0.00 strength:2.00
+Witch--Swamp #angle:0.00 strength:2.00
+Swamp->LShrineE #angle:0.00 strength:2.00
+Swamp--HShrine #angle:0.00 strength:2.00
+HShrine>>Gate #angle:0.00 strength:2.00
+HShrine--Altar2 #angle:0.00 strength:2.00
+Altar2--WaterEle #angle:0.00 strength:2.00
+Altar2--Sentinel #angle:0.00 strength:2.00
+Sentinel>>FoundryW #angle:0.00 strength:2.00
+Sentinel->FoundryE #angle:0.00 strength:2.00
+Sentinel--GateWallE #angle:0.00 strength:2.00
+FoundryE--FoundryW #angle:0.00 strength:2.00
+FoundryW--Warlock #angle:0.00 strength:2.00
+FoundryW*>Misty #angle:0.00 strength:2.00
+Misty--Dracolich #angle:0.00 strength:2.00
+Misty--CatacombE #angle:0.00 strength:2.00
+Misty>>CatacombW #angle:0.00 strength:2.00
+CatacombW--CatacombE #angle:0.00 strength:2.00
+CatacombW--Beetle #angle:0.00 strength:2.00
+Beetle--UTunnel #angle:0.00 strength:2.00
+UTunnel--WallN #angle:0.00 strength:2.00
+WallN--Hydra #angle:0.00 strength:2.00
+Catapult->WallN #angle:0.00 strength:2.00
+Catapult--Hydra #angle:0.00 strength:2.00
+Hydra--Guard #angle:0.00 strength:2.00
+Guard--Altar4 #angle:0.00 strength:2.00
+Altar4>>LShrineN #angle:0.00 strength:2.00
+Altar4--Ghost #angle:0.00 strength:2.00
+LShrineN>>HShrine #angle:0.00 strength:2.00
+Hex*>LShrineN #angle:0.00 strength:2.00
+Ghost--Hex #angle:0.00 strength:2.00
+Hex--Ancient #angle:0.00 strength:2.00
+
+#Wreck pos:(2.40,-7.18) type:start weight:1
+#Gate pos:(-2.23,-7.22) type:poi weight:1
+#Ritual pos:(0.05,-5.96) type:poi weight:1
+#Tinker pos:(-7.81,-6.79) type:poi weight:1
+#Library pos:(-7.39,-4.78) type:poi weight:1
+#GateWallW pos:(-2.96,-4.82) type:poi weight:1
+#Stream pos:(-6.57,-3.37) type:poi weight:1
+#Witch pos:(-9.43,-2.84) type:poi weight:1
+#LShrineW pos:(-4.58,-3.22) type:poi weight:1
+#Swamp pos:(-5.82,-0.97) type:poi weight:1
+#LShrineE pos:(-2.79,-2.98) type:poi weight:1
+#HShrine pos:(-1.02,-2.18) type:poi weight:1
+#Altar2 pos:(1.04,-3.64) type:poi weight:1
+#WaterEle pos:(1.24,-1.41) type:poi weight:1
+#Sentinel pos:(4.10,-4.15) type:poi weight:1
+#FoundryW pos:(6.38,0.39) type:poi weight:1
+#FoundryE pos:(7.98,-0.97) type:poi weight:1
+#GateWallE pos:(-0.80,-4.80) type:poi weight:1
+#Warlock pos:(3.90,0.39) type:poi weight:1
+#Misty pos:(6.59,3.01) type:poi weight:1
+#Dracolich pos:(3.90,3.01) type:poi weight:1
+#CatacombE pos:(9.36,6.18) type:poi weight:1
+#CatacombW pos:(5.72,6.59) type:poi weight:1
+#Beetle pos:(3.59,7.20) type:poi weight:1
+#UTunnel pos:(0.99,7.25) type:poi weight:1
+#WallN pos:(-1.60,7.22) type:poi weight:1
+#Hydra pos:(-2.23,4.80) type:poi weight:1
+#Catapult pos:(-4.44,7.18) type:poi weight:1
+#Guard pos:(-4.61,3.20) type:poi weight:1
+#Altar4 pos:(-3.01,1.43) type:poi weight:1
+#LShrineN pos:(-0.27,0.48) type:poi weight:1
+#Ghost pos:(-1.21,2.98) type:poi weight:1
+#Hex pos:(0.99,3.85) type:poi weight:1
+#Ancient pos:(0.95,5.65) type:poi weight:1

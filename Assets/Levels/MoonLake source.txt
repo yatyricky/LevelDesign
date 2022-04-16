@@ -1,23 +1,42 @@
-Lift->PropMgr
-Boss>>Lift
-Hall--Lift
-Hall--Sagi
-Sagi--Boss
-PropMgr>>Sagi
-Sagi>>Chief
-Sagi--MoonIsle
-Sagi--Cabin
-MoonIsle--Chief
-Cabin--UCabin
-UCabin--UMidIsle
-UMidIsle--MidIsle
-UMidIsle>>UPavilion
-UPavilion--Pavilion
-Pavilion--Woods
-Woods--Bank
-Bank--Dorm
-Dorm>>Woods
-Dorm--FullMoon
-FullMoon--UFullMoon
-UFullMoon>>UPavilion
-Dorm--Chief
+Lift->PropMgr #angle:0.00 strength:2.00
+Boss>>Lift #angle:0.00 strength:2.00
+Hall--Lift #angle:0.00 strength:2.00
+Hall--Gate #angle:0.00 strength:2.00
+Gate--Boss #angle:0.00 strength:2.00
+PropMgr>>Gate #angle:0.00 strength:2.00
+Gate>>Chief #angle:0.00 strength:2.00
+Gate--MoonIsle #angle:0.00 strength:2.00
+Gate--Cabin #angle:0.00 strength:2.00
+MoonIsle--Chief #angle:0.00 strength:2.00
+Cabin--UCabin #angle:0.00 strength:2.00
+UCabin--UMidIsle #angle:0.00 strength:2.00
+UMidIsle--MidIsle #angle:0.00 strength:2.00
+UMidIsle>>UPavilion #angle:0.00 strength:2.00
+UPavilion--Pavilion #angle:0.00 strength:2.00
+Pavilion--Woods #angle:0.00 strength:2.00
+Woods--Bank #angle:0.00 strength:2.00
+Bank--Dorm #angle:0.00 strength:2.00
+Dorm>>Woods #angle:0.00 strength:2.00
+Dorm--FullMoon #angle:0.00 strength:2.00
+FullMoon--UFullMoon #angle:0.00 strength:2.00
+UFullMoon>>UPavilion #angle:0.00 strength:2.00
+Dorm--Chief #angle:0.00 strength:2.00
+
+#Lift pos:(13.43,11.72) type:poi weight:1
+#PropMgr pos:(9.77,11.56) type:poi weight:1
+#Boss pos:(11.32,9.94) type:boss weight:1
+#Hall pos:(12.98,8.38) type:poi weight:1
+#Gate pos:(9.74,8.33) type:save weight:1
+#Chief pos:(9.78,3.54) type:save weight:1
+#MoonIsle pos:(8.16,6.77) type:poi weight:1
+#Cabin pos:(6.54,8.32) type:poi weight:1
+#UCabin pos:(6.56,6.75) type:poi weight:1
+#UMidIsle pos:(4.93,5.17) type:poi weight:1
+#MidIsle pos:(3.33,6.76) type:poi weight:1
+#UPavilion pos:(3.29,3.53) type:poi weight:1
+#Pavilion pos:(1.76,3.56) type:poi weight:1
+#Woods pos:(0.12,3.57) type:start weight:1
+#Bank pos:(0.10,0.34) type:poi weight:1
+#Dorm pos:(6.54,0.32) type:poi weight:1
+#FullMoon pos:(6.55,1.96) type:poi weight:1
+#UFullMoon pos:(6.58,3.54) type:save weight:1

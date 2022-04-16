@@ -1,0 +1,75 @@
+#header {
+    width: auto;
+    border-bottom-color: #222222;
+    border-bottom-width: 1px;
+    display: flex;
+    flex-direction: row;
+    height: 20px;
+    min-height: 20px;
+    position: absolute;
+}
+
+#body {
+    /*background-color: #252629;*/
+    width: auto;
+}
+
+#connections {
+    position: absolute;
+}
+
+#nodes {
+    position: absolute;
+}
+
+.node {
+    width: 60px;
+    height: 60px;
+    border-radius: 30px;
+    background-color: #3d4b54;
+    position: absolute;
+    border-width: 2px;
+    border-color: #343839;
+}
+
+.connection {
+    position: absolute;
+}
+
+.title {
+    height: 60px;
+    -unity-text-align: middle-center;
+}
+
+.title2 {
+    -unity-text-align: middle-center;
+}
+
+.connection {
+    position: absolute;
+}
+
+#conn-start {
+    width: 10px;
+    height: 10px;
+    border-radius: 5px;
+    background-color: #ffffff;
+    position: absolute;
+}
+
+.field {
+    width: 160px;
+}
+
+.data-editor {
+    top: 24px;
+    width: 180px;
+    padding: 10px;
+    background-color: #323232;
+    border-color: #262626;
+    border-width: 1px;
+    position: absolute;
+}
+
+#node-name {
+}

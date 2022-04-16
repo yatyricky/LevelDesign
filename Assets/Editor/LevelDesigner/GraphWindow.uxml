@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<engine:UXML
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:engine="UnityEngine.UIElements"
+        xmlns:editor="UnityEditor.UIElements"
+        xsi:noNamespaceSchemaLocation="../../../UIElementsSchema/UIElements.xsd"
+>
+    <engine:VisualElement name="body">
+        <engine:VisualElement name="connections">
+        </engine:VisualElement>
+        <engine:VisualElement name="nodes">
+        </engine:VisualElement>
+        <engine:VisualElement name="conn-start"/>
+    </engine:VisualElement>
+    <engine:VisualElement name="header">
+        <engine:Button name="new-file" text="新建"/>
+        <engine:Button name="load" text="打开"/>
+        <engine:Button name="save" text="保存"/>
+        <engine:Button name="save-as" text="另存为"/>
+    </engine:VisualElement>
+    <engine:VisualElement name="node-editor" class="data-editor">
+        <engine:Label text="编辑节点" class="field title2"/>
+        <engine:TextField name="node-name" class="field" />
+        <editor:ToolbarMenu name="node-type" class="field"/>
+    </engine:VisualElement>
+    <engine:VisualElement name="connection-editor" class="data-editor">
+        <engine:Label text="编辑连接" class="field title2"/>
+        <editor:ToolbarMenu name="connection-type" class="field"/>
+    </engine:VisualElement>
+
+</engine:UXML>

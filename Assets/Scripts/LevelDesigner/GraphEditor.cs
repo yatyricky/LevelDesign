@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using Sirenix.OdinInspector;
 using UnityEditor;
 using UnityEngine;
@@ -22,7 +21,6 @@ namespace LevelDesigner
         public Transform edges;
         public GameObject nodePrefab;
         public GameObject edgePrefab;
-        public NodePos[] nodePos;
 
         [BoxGroup("主要功能操作区域")]
         [LabelText("配置")]
@@ -51,49 +49,24 @@ namespace LevelDesigner
             AssetDatabase.Refresh();
         }
 
-        private NodePos FindNodePos(string nodeName)
-        {
-            if (nodePos == null)
-                nodePos = new NodePos[0];
-
-            return nodePos.FirstOrDefault(po => po.name == nodeName);
-        }
-
-        private void Update()
-        {
-            foreach (Transform node in nodes)
-            {
-                var pos = node.position;
-                var po = FindNodePos(node.name);
-                if (po == null)
-                {
-                    Array.Resize(ref nodePos, nodePos.Length + 1);
-                    nodePos[nodePos.Length - 1] = new NodePos()
-                    {
-                        name = node.name,
-                        position = pos
-                    };
-                }
-                else
-                {
-                    po.position = pos;
-                }
-            }
-        }
-
         private Graph ToVirtualGraph()
         {
             var graph = new Graph();
             foreach (Transform nodeTrs in nodes)
             {
                 var node = nodeTrs.GetComponent<NodeEditor>();
-                graph.AddVertex(node.name, node.weight);
+                var v = graph.AddVertex(node.name, node.weight);
+                v.Type = node.nodeType;
+                var pos = nodeTrs.position;
+                v.Position = new Vector2(pos.x, pos.z);
             }
 
             foreach (Transform edgeTrs in edges)
             {
                 var edge = edgeTrs.GetComponent<EdgeEditor>();
-                graph.AddEdge(edge.from.name, edge.to.name, edge.type);
+                var e = graph.AddEdge(edge.from.name, edge.to.name, edge.type);
+                e.Angle = edge.angle;
+                e.Strength = edge.strength;
             }
 
             return graph;
@@ -153,12 +126,9 @@ namespace LevelDesigner
             {
                 var node = AddNode();
                 node.name = vertex.Name;
+                node.nodeType = vertex.Type;
                 dict.Add(vertex.Name, node);
-                var po = FindNodePos(vertex.Name);
-                if (po != null)
-                {
-                    node.transform.position = po.position;
-                }
+                node.transform.position = new Vector3(vertex.Position.x, 0f, vertex.Position.y);
             }
 
             foreach (var edge in graph.Edges)
@@ -167,6 +137,8 @@ namespace LevelDesigner
                 line.from = dict[edge.From.Name];
                 line.to = dict[edge.To.Name];
                 line.type = edge.Type;
+                line.angle = edge.Angle;
+                line.strength = edge.Strength;
             }
         }
 
