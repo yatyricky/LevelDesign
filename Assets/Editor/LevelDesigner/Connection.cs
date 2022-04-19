@@ -37,16 +37,15 @@ namespace LevelDesignerEditor
             }
         }
 
-        public VisualElement DOM { get; private set; }
-        private Rect _rect;
-        private Vector3[] _pathPoints;
+        public VisualElement DOM { get; }
 
         private Node _source, _target;
-        public Edge Edge;
+        public Edge Edge { get; }
 
-        private GraphWindow _parent;
+        private Vector3[] _pathPoints;
+        private bool _isSelected;
 
-        public Connection(Node source, Node target, Edge edge)
+        public Connection(Node source, Node target, Edge edge, VisualElement parent)
         {
             _source = source;
             _target = target;
@@ -55,83 +54,23 @@ namespace LevelDesignerEditor
             DOM = new VisualElement();
             DOM.AddToClassList("connection");
 
-            DOM.RegisterCallback<MouseDownEvent>(OnMouseDown);
-            DOM.RegisterCallback<MouseMoveEvent>(OnMouseMove);
-            DOM.RegisterCallback<MouseUpEvent>(OnMouseUp);
-            DOM.RegisterCallback<MouseOutEvent>(OnMouseOut);
+            parent.Add(DOM);
         }
 
         public void Dispose()
         {
-            DOM.UnregisterCallback<MouseDownEvent>(OnMouseDown);
-            DOM.UnregisterCallback<MouseMoveEvent>(OnMouseMove);
-            DOM.UnregisterCallback<MouseUpEvent>(OnMouseUp);
-            DOM.UnregisterCallback<MouseOutEvent>(OnMouseOut);
-
             DOM.parent.Remove(DOM);
         }
 
-        private void OnMouseDown(MouseDownEvent e)
-        {
-            if (e.button != 0)
-            {
-                return;
-            }
-
-            var hit = false;
-            if (_pathPoints != null)
-            {
-                var circle = new Circle(e.localMousePosition + _rect.position, 10f);
-                for (var i = 0; i < _pathPoints.Length - 1 && !hit; i++)
-                {
-                    var capsule = new Capsule(_pathPoints[i], _pathPoints[i + 1], 10f);
-                    if (Utils.CapsuleCircle(capsule, circle))
-                    {
-                        hit = true;
-                    }
-                }
-            }
-
-            if (hit)
-            {
-                _parent.SetEditingConnection(this);
-                e.StopPropagation();
-            }
-            else
-            {
-                _parent.SetEditingConnection(null);
-            }
-        }
-
-        private void OnMouseMove(MouseMoveEvent e)
-        {
-            // e.StopPropagation();
-        }
-
-        private void OnMouseUp(MouseUpEvent e)
-        {
-            // e.StopPropagation();
-        }
-
-        private void OnMouseOut(MouseOutEvent e)
-        {
-            // e.StopPropagation();
-        }
-
-        public void SetParent(GraphWindow parent)
-        {
-            _parent = parent;
-        }
-
-        public void Draw()
+        public void OnGUI()
         {
             if (_source == null || _target == null)
             {
                 return;
             }
 
-            var sourcePos = _source.WorldPosition;
-            var targetPos = _target.WorldPosition;
+            var sourcePos = _source.DOM.worldBound.center - new Vector2(0f, 21f);
+            var targetPos = _target.DOM.worldBound.center - new Vector2(0f, 21f);
             var p1 = sourcePos;
             var p2 = targetPos;
             var conePosCheck = GraphWindow.NodeRadius;
@@ -170,11 +109,12 @@ namespace LevelDesignerEditor
                 maxY = Mathf.Max(maxY, point.y);
             }
 
-            _rect = new Rect(minX, minY, maxX - minX, maxY - minY);
-            DOM.style.width = _rect.width;
-            DOM.style.height = _rect.height;
-            DOM.style.left = _rect.x;
-            DOM.style.top = _rect.y;
+            var rect = new Rect(minX, minY, maxX - minX, maxY - minY);
+            var canvasPos = DOM.parent.parent.worldBound.position;
+            DOM.style.width = rect.width;
+            DOM.style.height = rect.height;
+            DOM.style.left = rect.x - canvasPos.x;
+            DOM.style.top = rect.y - canvasPos.y + 21f;
 
             var coneIndex = _pathPoints.Length - 2;
             var dotIndex = 0;
@@ -208,7 +148,7 @@ namespace LevelDesignerEditor
             var conePos = _pathPoints[coneIndex];
             var coneRot = Quaternion.AngleAxis(-ArrowAngle * 0.5f, Vector3.forward) * (conePos - _pathPoints[coneIndex + 1]);
             var dotPos = _pathPoints[dotIndex];
-            var tex = _parent.EditingConnection == this ? _pathTexHigh : _pathTex;
+            var tex = _isSelected ? _pathTexHigh : _pathTex;
             Handles.DrawAAPolyLine(tex, _pathPoints);
             switch (Edge.Type)
             {
@@ -229,6 +169,35 @@ namespace LevelDesignerEditor
             }
 
             Handles.EndGUI();
+        }
+
+        public bool PathCastPoint(Vector2 p)
+        {
+            var hit = false;
+            var fix = new Vector3(0f, 21f, 0f);
+            if (_pathPoints != null)
+            {
+                for (var i = 0; i < _pathPoints.Length - 1 && !hit; i++)
+                {
+                    var capsule = new Capsule(_pathPoints[i] + fix, _pathPoints[i + 1] + fix, 8f);
+                    if (Utils.CapsuleContains(capsule, p))
+                    {
+                        hit = true;
+                    }
+                }
+            }
+
+            return hit;
+        }
+
+        public void SetSelected(bool flag)
+        {
+            _isSelected = flag;
+        }
+
+        public void SetEdgeType(EdgeType edgeType)
+        {
+            Edge.Type = edgeType;
         }
     }
 }

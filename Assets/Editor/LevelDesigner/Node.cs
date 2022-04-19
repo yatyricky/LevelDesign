@@ -1,189 +1,114 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.InteropServices;
 using LevelDesigner;
-using UnityEditor;
-using UnityEditor.Graphs;
 using UnityEngine;
 using UnityEngine.UIElements;
-using Vertex = LevelDesigner.Vertex;
 
 namespace LevelDesignerEditor
 {
     public class Node : IDisposable
     {
-        public VisualElement DOM { get; private set; }
+        public VisualElement DOM { get; }
 
-        public Vector2 Position { get; private set; }
+        // dragging
+        public LevelDesigner.Vertex Vertex { get; }
 
-        public Vector2 WorldPosition => Position + new Vector2(30f, 30f) + Utils.GetDOMLocalPosition(DOM.parent);
+        private bool _isSelected;
 
-        private bool _dragging;
-
-        private Vector2 _anchor;
-
-        // private List<Node> _outgoings;
-        // private int _incomingPortIndex;
-        private string _name;
-        // private Color _edgeColor;
-
-        private Label _domTitle;
-
-        public Vertex Vertex;
-        private GraphWindow _parent;
-
-        public Node() : this("Node", new Vector2(0, 0))
+        public Circle Circle
         {
+            get
+            {
+                var center = DOM.worldBound.center;
+                return new Circle(center, DOM.worldBound.width * 0.5f);
+            }
         }
 
-        public Node(string name, Vector2 position)
+        public Node(LevelDesigner.Vertex vertex, VisualElement parent)
         {
+            Vertex = vertex;
+
+            // root
             DOM = new VisualElement();
             DOM.AddToClassList("node");
-            _domTitle = new Label();
-            _domTitle.AddToClassList("title");
-            DOM.Add(_domTitle);
 
-            // _edgeColor = _palette[_instances++ % _palette.Length];
-            // _edgeColor = Color.cyan;
+            // title
+            var domTitle = new Label();
+            domTitle.AddToClassList("title");
+            domTitle.text = vertex.Name;
+            DOM.Add(domTitle);
 
-            _name = name;
-            Position = position;
-            _dragging = false;
-            // _outgoings = new List<Node>();
-            Update();
-            DOM.RegisterCallback<MouseDownEvent>(OnMouseDown);
-            DOM.RegisterCallback<MouseMoveEvent>(OnMouseMove);
-            DOM.RegisterCallback<MouseUpEvent>(OnMouseUp);
-            DOM.RegisterCallback<MouseOutEvent>(OnMouseOut);
+            // type
+            SetVertexType(vertex.Type);
+
+            // hierarchy
+            parent.Add(DOM);
+
+            // position
+            var parentPos = DOM.parent.parent.worldBound.position;
+            SetPosition(Utils.World2Canvas(vertex.Position) + parentPos);
         }
 
-        public void SetParent(GraphWindow parent)
+        public void OnGUI()
         {
-            _parent = parent;
+            // ((Label) DOM.Children().First()).text = DOM.worldBound.ToString();
         }
 
-        // public Node AddOutgoing(Node next)
-        // {
-        //     _outgoings.Add(next);
-        //     return this;
-        // }
-
-        private void Update()
+        public void Dispose()
         {
-            DOM.style.left = Position.x;
-            DOM.style.top = Position.y;
+            DOM.parent.Remove(DOM);
         }
 
-        // public void ResetIncomingPorts()
-        // {
-        //     _incomingPortIndex = 0;
-        // }
-
-        // private Vector2 GetIncomingPort()
-        // {
-        //     return new Vector2(Position.x, Position.y + 24 + _incomingPortIndex++ * 16);
-        // }
-
-        public void Draw()
+        public void SetSelected(bool flag)
         {
-            _domTitle.text = _name; // + $"{Position}";
-
-            switch (Vertex.Type)
+            if (_isSelected != flag)
             {
-                case NodeType.Normal:
+                if (flag)
+                {
+                    DOM.AddToClassList("node-high");
+                }
+                else
+                {
+                    DOM.RemoveFromClassList("node-high");
+                }
+            }
+
+            _isSelected = flag;
+        }
+
+        private void SetLocalPosition(Vector2 localPos)
+        {
+            DOM.style.left = localPos.x;
+            DOM.style.top = localPos.y;
+        }
+
+        public void SetPosition(Vector2 worldPos)
+        {
+            var parentPos = DOM.parent.parent.worldBound.position;
+            var relPos = worldPos - parentPos;
+            SetLocalPosition(relPos);
+            Vertex.Position = Utils.Canvas2World(relPos);
+        }
+
+        public void SetVertexType(VertexType vertexType)
+        {
+            Vertex.Type = vertexType;
+            switch (vertexType)
+            {
+                case VertexType.Normal:
                     DOM.style.backgroundColor = new Color(0.239f, 0.294f, 0.329f);
                     break;
-                case NodeType.Start:
+                case VertexType.Start:
                     DOM.style.backgroundColor = new Color(0.082f, 0.235f, 0.467f);
                     break;
-                case NodeType.Save:
+                case VertexType.Save:
                     DOM.style.backgroundColor = new Color(0.467f, 0.294f, 0.082f);
                     break;
-                case NodeType.Boss:
+                case VertexType.Boss:
                     DOM.style.backgroundColor = new Color(0.467f, 0.082f, 0.173f);
                     break;
                 default:
                     throw new ArgumentOutOfRangeException();
             }
-
-            Update();
-        }
-
-        private void OnMouseDown(MouseDownEvent e)
-        {
-            if (e.button != 0)
-            {
-                return;
-            }
-            
-            _parent.SetEditingNode(this);
-
-            if (_dragging)
-            {
-                e.StopImmediatePropagation();
-                return;
-            }
-
-            var parent = DOM.parent;
-            var siblings = parent.Children().ToList();
-            var dict = new Dictionary<VisualElement, int>();
-            for (var i = 0; i < parent.childCount; i++)
-            {
-                var item = siblings[i];
-                var order = item == DOM ? siblings.Count : i;
-                dict.Add(item, order);
-            }
-
-            parent.Sort((a, b) => dict[a] - dict[b]);
-
-            var mousePos = e.mousePosition;
-            _anchor = mousePos - Position;
-            _dragging = true;
-            e.StopPropagation();
-        }
-
-        private void OnMouseMove(MouseMoveEvent e)
-        {
-            if (!_dragging)
-                return;
-
-            Position = e.mousePosition - _anchor;
-            Vertex.Position = GraphWindow.Screen2World(Position);
-            Update();
-
-            e.StopPropagation();
-        }
-
-        private void OnMouseUp(MouseUpEvent e)
-        {
-            if (!_dragging)
-                return;
-
-            _dragging = false;
-            e.StopPropagation();
-        }
-
-        private void OnMouseOut(MouseOutEvent e)
-        {
-            if (!_dragging)
-                return;
-
-            Position = e.mousePosition - _anchor;
-            Update();
-
-            e.StopPropagation();
-        }
-
-        public void Dispose()
-        {
-            DOM.UnregisterCallback<MouseDownEvent>(OnMouseDown);
-            DOM.UnregisterCallback<MouseMoveEvent>(OnMouseMove);
-            DOM.UnregisterCallback<MouseUpEvent>(OnMouseUp);
-            DOM.UnregisterCallback<MouseOutEvent>(OnMouseOut);
-
-            DOM.parent.Remove(DOM);
         }
     }
 }

@@ -37,6 +37,7 @@ LShrineN>>HShrine #angle:0.00 strength:2.00
 Hex*>LShrineN #angle:0.00 strength:2.00
 Ghost--Hex #angle:0.00 strength:2.00
 Hex--Ancient #angle:0.00 strength:2.00
+GateWallW*>GateWallE #angle:0.00 strength:0.00
 
 #Wreck pos:(2.40,-7.18) type:start weight:1
 #Gate pos:(-2.23,-7.22) type:poi weight:1

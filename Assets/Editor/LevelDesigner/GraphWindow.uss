@@ -1,11 +1,10 @@
 #header {
     width: auto;
-    border-bottom-color: #222222;
-    border-bottom-width: 1px;
     display: flex;
     flex-direction: row;
     height: 20px;
     min-height: 20px;
+    background-color: #2d2d2d;
     position: absolute;
 }
 
@@ -14,12 +13,16 @@
     width: auto;
 }
 
-#connections {
+#canvas {
     position: absolute;
+    width: 600px;
+    height: 600px;
 }
 
 #nodes {
     position: absolute;
+    width: 600px;
+    height: 600px;
 }
 
 .node {
@@ -30,6 +33,16 @@
     position: absolute;
     border-width: 2px;
     border-color: #343839;
+}
+
+.node-high {
+    border-color: #6777E2;
+}
+
+#connections {
+    position: absolute;
+    width: 600px;
+    height: 600px;
 }
 
 .connection {
@@ -45,11 +58,7 @@
     -unity-text-align: middle-center;
 }
 
-.connection {
-    position: absolute;
-}
-
-#conn-start {
+.port {
     width: 10px;
     height: 10px;
     border-radius: 5px;
@@ -57,19 +66,20 @@
     position: absolute;
 }
 
+#inspector {
+    position: absolute;
+    top: 20px;
+    margin: 4px;
+    width: 180px;
+    background-color: #323232;
+    border-color: #262626;
+    border-width: 1px;
+    height: 60px;
+}
+
 .field {
     width: 160px;
 }
 
 .data-editor {
-    top: 24px;
-    width: 180px;
-    padding: 10px;
-    background-color: #323232;
-    border-color: #262626;
-    border-width: 1px;
-    position: absolute;
-}
-
-#node-name {
 }

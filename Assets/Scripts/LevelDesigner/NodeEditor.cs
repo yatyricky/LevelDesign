@@ -8,7 +8,7 @@ namespace LevelDesigner
     public class NodeEditor : MonoBehaviour
     {
         public float weight;
-        public NodeType nodeType;
+        public VertexType nodeType;
 
         public Material matNormal;
         public Material matStart;
@@ -30,16 +30,16 @@ namespace LevelDesigner
             _text.text = name;
             switch (nodeType)
             {
-                case NodeType.Normal:
+                case VertexType.Normal:
                     _renderer.material = matNormal;
                     break;
-                case NodeType.Start:
+                case VertexType.Start:
                     _renderer.material = matStart;
                     break;
-                case NodeType.Save:
+                case VertexType.Save:
                     _renderer.material = matSave;
                     break;
-                case NodeType.Boss:
+                case VertexType.Boss:
                     _renderer.material = matBoss;
                     break;
                 default:

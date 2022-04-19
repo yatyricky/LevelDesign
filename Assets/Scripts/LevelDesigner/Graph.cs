@@ -98,26 +98,26 @@ namespace LevelDesigner
                         switch (vType)
                         {
                             case "start":
-                                vertex.Type = NodeType.Start;
+                                vertex.Type = VertexType.Start;
                                 break;
                             case "boss":
-                                vertex.Type = NodeType.Boss;
+                                vertex.Type = VertexType.Boss;
                                 break;
                             case "save":
-                                vertex.Type = NodeType.Save;
+                                vertex.Type = VertexType.Save;
                                 break;
                             case "poi":
-                                vertex.Type = NodeType.Normal;
+                                vertex.Type = VertexType.Normal;
                                 break;
                             default:
                                 Debug.LogError($"Unknown Vertex Type @ line {line}. Allowed: start|boss|save|poi");
-                                vertex.Type = NodeType.Normal;
+                                vertex.Type = VertexType.Normal;
                                 break;
                         }
                     }
                     else
                     {
-                        vertex.Type = NodeType.Normal;
+                        vertex.Type = VertexType.Normal;
                     }
 
                     continue;

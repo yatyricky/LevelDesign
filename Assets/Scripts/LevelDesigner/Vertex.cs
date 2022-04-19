@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace LevelDesigner
 {
-    public enum NodeType
+    public enum VertexType
     {
         Normal,
         Start,
@@ -15,7 +15,7 @@ namespace LevelDesigner
     {
         public string Name;
         public float Weight;
-        public NodeType Type;
+        public VertexType Type;
 
         /// <summary>
         /// For drawing
@@ -32,13 +32,13 @@ namespace LevelDesigner
         {
             switch (Type)
             {
-                case NodeType.Normal:
+                case VertexType.Normal:
                     return "poi";
-                case NodeType.Start:
+                case VertexType.Start:
                     return "start";
-                case NodeType.Save:
+                case VertexType.Save:
                     return "save";
-                case NodeType.Boss:
+                case VertexType.Boss:
                     return "boss";
                 default:
                     throw new ArgumentOutOfRangeException();
