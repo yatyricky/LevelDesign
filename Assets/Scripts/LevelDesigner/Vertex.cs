@@ -20,6 +20,13 @@ namespace LevelDesigner
             get => _name;
             set
             {
+                var currentNames = _graph.GetVertexNames();
+                currentNames.Remove(_name);
+                if (currentNames.Contains(value))
+                {
+                    return;
+                }
+
                 _name = value;
             }
         }

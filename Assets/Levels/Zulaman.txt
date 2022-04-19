@@ -37,7 +37,6 @@ LShrineN>>HShrine
 Hex*>LShrineN
 Ghost--Hex
 Hex--Ancient
-GateWallW*>GateWallE
 
 #Wreck pos:(2.40,-7.18) type:start weight:1
 #Gate pos:(-2.23,-7.22) type:poi weight:1

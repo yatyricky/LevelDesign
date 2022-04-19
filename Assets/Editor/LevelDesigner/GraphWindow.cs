@@ -37,6 +37,7 @@ namespace LevelDesignerEditor
         private VisualElement _header, _body, _canvas, _inspector;
         private VisualElement _rootNodes, _rootConnections;
         private Button _new, _load, _save, _saveAs;
+        private Button _stability;
         private Label _fileName;
         private Dictionary<string, Node> _nodes;
         private Dictionary<string, Connection> _connections;
@@ -98,6 +99,8 @@ namespace LevelDesignerEditor
             _save.clickable.clicked += SaveSource;
             _saveAs = root.Q<Button>("save-as");
             _saveAs.clickable.clicked += SaveAsSource;
+            _stability = root.Q<Button>("stability");
+            _stability.clickable.clicked += CalculateStability;
 
             // header 
             _fileName = root.Q<Label>("file-name");
@@ -134,6 +137,17 @@ namespace LevelDesignerEditor
             _body.RegisterCallback<MouseMoveEvent>(OnMouseMove);
             _body.RegisterCallback<MouseUpEvent>(OnMouseUp);
             _body.RegisterCallback<MouseOutEvent>(OnMouseOut);
+        }
+
+        private void CalculateStability()
+        {
+            if (_graphData == null)
+            {
+                return;
+            }
+
+            var s = _graphData.CalculateNthOrderStabilityFactor(3);
+            EditorUtility.DisplayDialog("提示", $"3阶稳定因子为：{s}", "好的");
         }
 
         private DropdownMenuAction.Status GetConnectionEditorType(DropdownMenuAction arg)
@@ -210,6 +224,12 @@ namespace LevelDesignerEditor
             _body.UnregisterCallback<MouseMoveEvent>(OnMouseMove);
             _body.UnregisterCallback<MouseUpEvent>(OnMouseUp);
             _body.UnregisterCallback<MouseOutEvent>(OnMouseOut);
+
+            _new.clickable.clicked -= NewSource;
+            _load.clickable.clicked -= LoadSource;
+            _save.clickable.clicked -= SaveSource;
+            _saveAs.clickable.clicked -= SaveAsSource;
+            _stability.clickable.clicked -= CalculateStability;
         }
 
         private Node RaycastNodeBorder(Vector2 mousePos)
@@ -595,7 +615,7 @@ namespace LevelDesignerEditor
             else
             {
                 _nodeEditor.style.display = DisplayStyle.Flex;
-                // _editingNode.Vertex.Name = _nodeEditorName.value;
+                _editingNode.Vertex.Name = _nodeEditorName.value;
                 _nodeEditorName.value = _editingNode.Vertex.Name;
                 _nodeEditorType.text = _editingNode.Vertex.Type.ToString();
             }

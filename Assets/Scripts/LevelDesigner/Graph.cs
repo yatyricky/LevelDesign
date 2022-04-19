@@ -141,13 +141,20 @@ namespace LevelDesigner
             return Vertices.FirstOrDefault(node => node.Name == name);
         }
 
-        public Vertex AddVertex()
+        public HashSet<string> GetVertexNames()
         {
             var currentNames = new HashSet<string>();
             foreach (var vertex in Vertices)
             {
                 currentNames.Add(vertex.Name);
             }
+
+            return currentNames;
+        }
+
+        public Vertex AddVertex()
+        {
+            var currentNames = GetVertexNames();
 
             var i = 0;
             string newName;
