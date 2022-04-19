@@ -1,9 +1,9 @@
-A->B #angle:0.00 strength:0.00
-B--C #angle:0.00 strength:0.00
-C*>D #angle:0.00 strength:0.00
-D--D #angle:0.00 strength:0.00
-C>>C #angle:0.00 strength:0.00
-A*>A #angle:0.00 strength:0.00
+A->B
+B--C
+C*>D
+D--D
+C>>C
+A*>A
 
 #A pos:(0.14,1.06) type:poi weight:1
 #B pos:(3.84,-0.06) type:poi weight:1

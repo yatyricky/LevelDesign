@@ -1,26 +1,26 @@
-Lift->PropMgr #angle:0.00 strength:2.00
-Boss>>Lift #angle:0.00 strength:2.00
-Hall--Lift #angle:0.00 strength:2.00
-Hall--Gate #angle:0.00 strength:2.00
-Gate--Boss #angle:0.00 strength:2.00
-PropMgr>>Gate #angle:0.00 strength:2.00
-Gate>>Chief #angle:0.00 strength:2.00
-Gate--MoonIsle #angle:0.00 strength:2.00
-Gate--Cabin #angle:0.00 strength:2.00
-MoonIsle--Chief #angle:0.00 strength:2.00
-Cabin--UCabin #angle:0.00 strength:2.00
-UCabin--UMidIsle #angle:0.00 strength:2.00
-UMidIsle--MidIsle #angle:0.00 strength:2.00
-UMidIsle>>UPavilion #angle:0.00 strength:2.00
-UPavilion--Pavilion #angle:0.00 strength:2.00
-Pavilion--Woods #angle:0.00 strength:2.00
-Woods--Bank #angle:0.00 strength:2.00
-Bank--Dorm #angle:0.00 strength:2.00
-Dorm>>Woods #angle:0.00 strength:2.00
-Dorm--FullMoon #angle:0.00 strength:2.00
-FullMoon--UFullMoon #angle:0.00 strength:2.00
-UFullMoon>>UPavilion #angle:0.00 strength:2.00
-Dorm--Chief #angle:0.00 strength:2.00
+Lift->PropMgr
+Boss>>Lift
+Hall--Lift
+Hall--Gate
+Gate--Boss
+PropMgr>>Gate
+Gate>>Chief
+Gate--MoonIsle
+Gate--Cabin
+MoonIsle--Chief
+Cabin--UCabin
+UCabin--UMidIsle
+UMidIsle--MidIsle
+UMidIsle>>UPavilion
+UPavilion--Pavilion
+Pavilion--Woods
+Woods--Bank
+Bank--Dorm
+Dorm>>Woods
+Dorm--FullMoon
+FullMoon--UFullMoon
+UFullMoon>>UPavilion
+Dorm--Chief
 
 #Lift pos:(13.43,11.72) type:poi weight:1
 #PropMgr pos:(9.77,11.56) type:poi weight:1

@@ -13,6 +13,24 @@ namespace LevelDesigner
         public List<Vertex> Vertices = new List<Vertex>();
         public List<Edge> Edges = new List<Edge>();
 
+        private bool _dirty;
+
+        public bool Dirty
+        {
+            get => _dirty;
+            set
+            {
+                if (value != _dirty)
+                {
+                    // Debug.Log($"Graph {Name} dirty set to {value}");
+                }
+
+                _dirty = value;
+            }
+        }
+
+        public string Name { get; set; }
+
         /// <summary>
         /// A--B
         /// A->B
@@ -62,19 +80,7 @@ namespace LevelDesigner
                             break;
                     }
 
-                    var edge = g.AddEdge(from, to, edgeType);
-
-                    var angle = e.Groups["angle"].Value;
-                    if (!string.IsNullOrEmpty(angle))
-                    {
-                        edge.Angle = float.Parse(angle);
-                    }
-
-                    var strength = e.Groups["strength"].Value;
-                    if (!string.IsNullOrEmpty(strength))
-                    {
-                        edge.Strength = float.Parse(strength);
-                    }
+                    g.AddEdge(@from, to, edgeType);
 
                     continue;
                 }
@@ -126,6 +132,7 @@ namespace LevelDesigner
                 Debug.LogError($"Syntax error @ line {line}");
             }
 
+            g.Dirty = false;
             return g;
         }
 
@@ -134,10 +141,29 @@ namespace LevelDesigner
             return Vertices.FirstOrDefault(node => node.Name == name);
         }
 
+        public Vertex AddVertex()
+        {
+            var currentNames = new HashSet<string>();
+            foreach (var vertex in Vertices)
+            {
+                currentNames.Add(vertex.Name);
+            }
+
+            var i = 0;
+            string newName;
+            do
+            {
+                newName = $"V{++i}";
+            } while (currentNames.Contains(newName));
+
+            return AddVertex(newName);
+        }
+
         public Vertex AddVertex(string name, float weight = 1f)
         {
-            var vertex = new Vertex(name, weight);
+            var vertex = new Vertex(name, weight, this);
             Vertices.Add(vertex);
+            Dirty = true;
             return vertex;
         }
 
@@ -150,24 +176,47 @@ namespace LevelDesigner
         {
             var nodeFrom = FindVertex(from);
             var nodeTo = FindVertex(to);
-            var edge = new Edge(nodeFrom, nodeTo, type);
+            var edge = new Edge(nodeFrom, nodeTo, type, this);
             Edges.Add(edge);
+            Dirty = true;
             return edge;
         }
 
         public void RemoveVertex(string name)
         {
-            var node = FindVertex(name);
-            Vertices.Remove(node);
+            RemoveVertex(FindVertex(name));
+        }
+
+        public void RemoveVertex(Vertex vertex)
+        {
+            if (vertex == null)
+            {
+                return;
+            }
+
+            Vertices.Remove(vertex);
             var len = Edges.Count - 1;
             for (var i = len; i >= 0; i--)
             {
                 var edge = Edges[i];
-                if (edge.From == node || edge.To == node)
+                if (edge.From == vertex || edge.To == vertex)
                 {
                     Edges.RemoveAt(i);
                 }
             }
+
+            Dirty = true;
+        }
+
+        public void RemoveEdge(Edge edge)
+        {
+            if (edge == null)
+            {
+                return;
+            }
+
+            Edges.Remove(edge);
+            Dirty = true;
         }
 
         public List<Edge> GetOutgoingEdges(string name)

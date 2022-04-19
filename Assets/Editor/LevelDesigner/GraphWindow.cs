@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using LevelDesigner;
@@ -36,6 +37,7 @@ namespace LevelDesignerEditor
         private VisualElement _header, _body, _canvas, _inspector;
         private VisualElement _rootNodes, _rootConnections;
         private Button _new, _load, _save, _saveAs;
+        private Label _fileName;
         private Dictionary<string, Node> _nodes;
         private Dictionary<string, Connection> _connections;
 
@@ -57,6 +59,8 @@ namespace LevelDesignerEditor
         private ActionType _currAct;
         private Vector2 _mouseStart;
         private Vector2 _mouseStartTarget;
+
+        private long _doubleClickTimestamp;
 
         private string _filePath;
         private Graph _graphData;
@@ -94,6 +98,9 @@ namespace LevelDesignerEditor
             _save.clickable.clicked += SaveSource;
             _saveAs = root.Q<Button>("save-as");
             _saveAs.clickable.clicked += SaveAsSource;
+
+            // header 
+            _fileName = root.Q<Label>("file-name");
 
             // node editor
             _nodeEditor = root.Q<VisualElement>("node-editor");
@@ -168,13 +175,32 @@ namespace LevelDesignerEditor
             if (_graphData != null)
             {
                 DrawGraph();
+                _fileName.text = $"{_graphData.Name}{(_graphData.Dirty ? "*" : "")}";
             }
 
             // controls
             var current = Event.current;
-            if (current.keyCode == KeyCode.Escape)
+            switch (current.keyCode)
             {
-                Close();
+                case KeyCode.Delete:
+                    if (_graphData == null)
+                    {
+                        break;
+                    }
+
+                    if (_editingConnection != null)
+                    {
+                        _graphData.RemoveEdge(_editingConnection.Edge);
+                    }
+                    else if (_editingNode != null)
+                    {
+                        _graphData.RemoveVertex(_editingNode.Vertex);
+                    }
+
+                    break;
+                case KeyCode.Escape:
+                    Close();
+                    break;
             }
         }
 
@@ -237,6 +263,18 @@ namespace LevelDesignerEditor
             return null;
         }
 
+        private void LeftMouseDoubleClick(MouseDownEvent e)
+        {
+            if (_graphData == null)
+            {
+                return;
+            }
+
+            var vertex = _graphData.AddVertex();
+            var node = AddNode(vertex);
+            node.SetPosition(e.mousePosition - new Vector2(30f, 30f));
+        }
+
         private void LeftMouseDown(MouseDownEvent e)
         {
             if (_currAct != ActionType.None)
@@ -244,6 +282,15 @@ namespace LevelDesignerEditor
                 return;
             }
 
+            var currMs = DateTimeOffset.Now.ToUnixTimeMilliseconds();
+            var diff = currMs - _doubleClickTimestamp;
+            if (diff < 500 && (e.mousePosition - _mouseStart).sqrMagnitude < 5)
+            {
+                LeftMouseDoubleClick(e);
+                return;
+            }
+
+            _doubleClickTimestamp = currMs;
             _mouseStart = e.mousePosition;
             if (_connStartNode != null)
             {
@@ -304,10 +351,12 @@ namespace LevelDesignerEditor
                 case ActionType.None:
                     var node = RaycastNodeBorder(mousePos);
                     SetStartConnectionNode(node, mousePos);
+                    SetEndConnectionNode(null, Vector2.zero);
                     break;
                 case ActionType.DraggingNode:
                     _editingNode.SetPosition(pos);
                     SetStartConnectionNode(null, Vector2.zero);
+                    SetEndConnectionNode(null, Vector2.zero);
                     break;
                 case ActionType.Panning:
                     var parentPos = _canvas.parent.worldBound.position;
@@ -315,6 +364,7 @@ namespace LevelDesignerEditor
                     _canvas.style.left = targetPos.x;
                     _canvas.style.top = targetPos.y;
                     SetStartConnectionNode(null, Vector2.zero);
+                    SetEndConnectionNode(null, Vector2.zero);
                     break;
                 case ActionType.Connecting:
                     _connStartCurrPos = mousePos;
@@ -338,6 +388,7 @@ namespace LevelDesignerEditor
                     {
                         _graphData.AddEdge(_connStartNode.Vertex.Name, _connEndNode.Vertex.Name);
                     }
+
                     SetEndConnectionNode(null, Vector2.zero);
                     break;
             }
@@ -450,27 +501,87 @@ namespace LevelDesignerEditor
         {
             // connections
             var currConnections = new HashSet<string>(_connections.Keys);
-            for (var i = 0; i < _graphData.Edges.Count; i++)
+            var sameWayCount = new Dictionary<string, int>();
+            var nodeEdgesDir = new Dictionary<string, Vector2>();
+            foreach (var edge in _graphData.Edges)
             {
-                var edge = _graphData.Edges[i];
                 var connectionName = edge.NodesName;
-                Connection connection;
                 if (currConnections.Contains(connectionName))
                 {
                     currConnections.Remove(connectionName);
-                    connection = _connections[connectionName];
                 }
                 else
                 {
-                    connection = AddConnection(edge);
+                    AddConnection(edge);
                 }
 
-                connection.OnGUI();
+                // 2 edges connecting the same vertices, preventing edges from overlapping
+                var sameKey = edge.OrderedNodesName;
+                if (sameWayCount.TryGetValue(sameKey, out var count))
+                {
+                    sameWayCount[sameKey] = count + 1;
+                }
+                else
+                {
+                    sameWayCount.Add(sameKey, 1);
+                }
+
+                // vertex edges
+                if (edge.From != edge.To)
+                {
+                    var fromName = edge.From.Name;
+                    var toName = edge.To.Name;
+                    var dir = (edge.To.Position - edge.From.Position).normalized;
+                    if (!nodeEdgesDir.ContainsKey(fromName))
+                    {
+                        nodeEdgesDir.Add(fromName, new Vector2());
+                    }
+
+                    if (!nodeEdgesDir.ContainsKey(toName))
+                    {
+                        nodeEdgesDir.Add(toName, new Vector2());
+                    }
+
+                    nodeEdgesDir[fromName] += dir;
+                    nodeEdgesDir[toName] -= dir;
+                }
+                else
+                {
+                    var toName = edge.To.Name;
+                    if (!nodeEdgesDir.ContainsKey(toName))
+                    {
+                        nodeEdgesDir.Add(toName, new Vector2());
+                    }
+                }
             }
 
             foreach (var connectionName in currConnections)
             {
                 RemoveConnection(connectionName);
+            }
+
+            foreach (var k in sameWayCount.Keys.ToList())
+            {
+                if (sameWayCount[k] == 1)
+                {
+                    sameWayCount[k] = 0;
+                }
+            }
+
+            foreach (var edge in _graphData.Edges)
+            {
+                var connectionName = edge.NodesName;
+                var sameKey = edge.OrderedNodesName;
+                var count = sameWayCount[sameKey];
+                sameWayCount[sameKey]--;
+                var connection = _connections[connectionName];
+                connection.SetCurve(count);
+                if (edge.From == edge.To)
+                {
+                    connection.SetAngle(-nodeEdgesDir[edge.From.Name]);
+                }
+
+                connection.OnGUI();
             }
         }
 
@@ -569,13 +680,13 @@ namespace LevelDesignerEditor
             return connection;
         }
 
-        private Node RemoveConnection(string connectionName)
+        private Connection RemoveConnection(string connectionName)
         {
-            if (_nodes.TryGetValue(connectionName, out var node))
+            if (_connections.TryGetValue(connectionName, out var connection))
             {
-                _rootNodes.Remove(node.DOM);
-                _nodes.Remove(connectionName);
-                return node;
+                _rootConnections.Remove(connection.DOM);
+                _connections.Remove(connectionName);
+                return connection;
             }
 
             Debug.LogError($"Unable to remove node {connectionName}");
@@ -599,6 +710,7 @@ namespace LevelDesignerEditor
         private void NewSource()
         {
             _graphData = new Graph();
+            _graphData.Name = "New Graph.txt";
             _graphData.AddVertex("Start");
         }
 
@@ -613,6 +725,7 @@ namespace LevelDesignerEditor
 
             _filePath = fp;
             _graphData = Graph.Parse(File.ReadAllText(fp));
+            _graphData.Name = Path.GetFileName(fp);
         }
 
         private void SaveSource()
@@ -625,6 +738,7 @@ namespace LevelDesignerEditor
 
             GetFilePath(out var defaultName, out var dirPath);
             File.WriteAllText(Path.Combine(dirPath, defaultName), _graphData.ToString());
+            _graphData.Dirty = false;
         }
 
         private void SaveAsSource()
@@ -641,6 +755,7 @@ namespace LevelDesignerEditor
                 return;
 
             File.WriteAllText(fp, _graphData.ToString());
+            _graphData.Dirty = false;
         }
 
         private void Clear()

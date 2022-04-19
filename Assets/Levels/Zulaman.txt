@@ -1,43 +1,43 @@
-Wreck--Gate #angle:0.00 strength:2.00
-Gate--Ritual #angle:0.00 strength:2.00
-Gate--Tinker #angle:0.00 strength:2.00
-Tinker--Library #angle:0.00 strength:2.00
-Library--GateWallW #angle:0.00 strength:2.00
-Library--Stream #angle:0.00 strength:2.00
-Stream--Witch #angle:0.00 strength:2.00
-Stream--LShrineW #angle:0.00 strength:2.00
-Witch--Swamp #angle:0.00 strength:2.00
-Swamp->LShrineE #angle:0.00 strength:2.00
-Swamp--HShrine #angle:0.00 strength:2.00
-HShrine>>Gate #angle:0.00 strength:2.00
-HShrine--Altar2 #angle:0.00 strength:2.00
-Altar2--WaterEle #angle:0.00 strength:2.00
-Altar2--Sentinel #angle:0.00 strength:2.00
-Sentinel>>FoundryW #angle:0.00 strength:2.00
-Sentinel->FoundryE #angle:0.00 strength:2.00
-Sentinel--GateWallE #angle:0.00 strength:2.00
-FoundryE--FoundryW #angle:0.00 strength:2.00
-FoundryW--Warlock #angle:0.00 strength:2.00
-FoundryW*>Misty #angle:0.00 strength:2.00
-Misty--Dracolich #angle:0.00 strength:2.00
-Misty--CatacombE #angle:0.00 strength:2.00
-Misty>>CatacombW #angle:0.00 strength:2.00
-CatacombW--CatacombE #angle:0.00 strength:2.00
-CatacombW--Beetle #angle:0.00 strength:2.00
-Beetle--UTunnel #angle:0.00 strength:2.00
-UTunnel--WallN #angle:0.00 strength:2.00
-WallN--Hydra #angle:0.00 strength:2.00
-Catapult->WallN #angle:0.00 strength:2.00
-Catapult--Hydra #angle:0.00 strength:2.00
-Hydra--Guard #angle:0.00 strength:2.00
-Guard--Altar4 #angle:0.00 strength:2.00
-Altar4>>LShrineN #angle:0.00 strength:2.00
-Altar4--Ghost #angle:0.00 strength:2.00
-LShrineN>>HShrine #angle:0.00 strength:2.00
-Hex*>LShrineN #angle:0.00 strength:2.00
-Ghost--Hex #angle:0.00 strength:2.00
-Hex--Ancient #angle:0.00 strength:2.00
-GateWallW*>GateWallE #angle:0.00 strength:0.00
+Wreck--Gate
+Gate--Ritual
+Gate--Tinker
+Tinker--Library
+Library--GateWallW
+Library--Stream
+Stream--Witch
+Stream--LShrineW
+Witch--Swamp
+Swamp->LShrineE
+Swamp--HShrine
+HShrine>>Gate
+HShrine--Altar2
+Altar2--WaterEle
+Altar2--Sentinel
+Sentinel>>FoundryW
+Sentinel->FoundryE
+Sentinel--GateWallE
+FoundryE--FoundryW
+FoundryW--Warlock
+FoundryW*>Misty
+Misty--Dracolich
+Misty--CatacombE
+Misty>>CatacombW
+CatacombW--CatacombE
+CatacombW--Beetle
+Beetle--UTunnel
+UTunnel--WallN
+WallN--Hydra
+Catapult->WallN
+Catapult--Hydra
+Hydra--Guard
+Guard--Altar4
+Altar4>>LShrineN
+Altar4--Ghost
+LShrineN>>HShrine
+Hex*>LShrineN
+Ghost--Hex
+Hex--Ancient
+GateWallW*>GateWallE
 
 #Wreck pos:(2.40,-7.18) type:start weight:1
 #Gate pos:(-2.23,-7.22) type:poi weight:1

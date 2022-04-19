@@ -12,19 +12,22 @@
     {
         public Vertex From;
         public Vertex To;
-        public EdgeType Type;
 
-        /// <summary>
-        /// For drawing
-        /// </summary>
-        public float Angle;
+        private EdgeType _type;
 
-        /// <summary>
-        /// For drawing
-        /// </summary>
-        public float Strength;
+        public EdgeType Type
+        {
+            get => _type;
+            set
+            {
+                _type = value;
+                _graph.Dirty = true;
+            }
+        }
 
-        public string Name
+        private readonly Graph _graph;
+
+        private string Name
         {
             get
             {
@@ -46,8 +49,29 @@
 
         public string NodesName => $"{From.Name}-{To.Name}";
 
-        public Edge(Vertex from, Vertex to, EdgeType type)
+        public string OrderedNodesName
         {
+            get
+            {
+                var fromName = From.Name;
+                var toName = To.Name;
+                string sameKey;
+                if (string.CompareOrdinal(fromName, toName) <= 0)
+                {
+                    sameKey = $"{fromName}-{toName}";
+                }
+                else
+                {
+                    sameKey = $"{toName}-{fromName}";
+                }
+
+                return sameKey;
+            }
+        }
+
+        public Edge(Vertex from, Vertex to, EdgeType type, Graph graph)
+        {
+            _graph = graph;
             From = from;
             To = to;
             Type = type;
@@ -55,7 +79,7 @@
 
         public override string ToString()
         {
-            return $"{Name} #angle:{Angle:0.00} strength:{Strength:0.00}";
+            return Name;
         }
     }
 }

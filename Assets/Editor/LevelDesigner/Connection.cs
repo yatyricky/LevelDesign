@@ -8,7 +8,7 @@ namespace LevelDesignerEditor
 {
     public class Connection : IDisposable
     {
-        private const float LoopSize = GraphWindow.NodeRadius * 4;
+        private const float LoopSize = GraphWindow.NodeRadius * 3;
         private const float ConeSize = 15f;
         private const float DotSize = 7f;
         private const float ArrowAngle = 45f;
@@ -44,6 +44,7 @@ namespace LevelDesignerEditor
 
         private Vector3[] _pathPoints;
         private bool _isSelected;
+        private float _angle;
 
         public Connection(Node source, Node target, Edge edge, VisualElement parent)
         {
@@ -69,8 +70,10 @@ namespace LevelDesignerEditor
                 return;
             }
 
-            var sourcePos = _source.DOM.worldBound.center - new Vector2(0f, 21f);
-            var targetPos = _target.DOM.worldBound.center - new Vector2(0f, 21f);
+            var rect1 = _source.DOM.worldBound;
+            var rect2 = _target.DOM.worldBound;
+            var sourcePos = rect1.center - new Vector2(0f, 21f);
+            var targetPos = rect2.center - new Vector2(0f, 21f);
             var p1 = sourcePos;
             var p2 = targetPos;
             var conePosCheck = GraphWindow.NodeRadius;
@@ -78,9 +81,9 @@ namespace LevelDesignerEditor
 
             if (_source == _target)
             {
-                var ra = Edge.Angle * Mathf.Deg2Rad;
-                var ral = (Edge.Angle - 45) * Mathf.Deg2Rad;
-                var rar = (Edge.Angle + 45) * Mathf.Deg2Rad;
+                var ra = _angle;
+                var ral = _angle - 45 * Mathf.Deg2Rad;
+                var rar = _angle + 45 * Mathf.Deg2Rad;
                 var r = new Vector2(GraphWindow.NodeRadius * Mathf.Cos(ra), GraphWindow.NodeRadius * Mathf.Sin(ra));
                 sourcePos = p1 + r;
                 targetPos = sourcePos;
@@ -93,6 +96,18 @@ namespace LevelDesignerEditor
 
                 conePosCheck = 1f;
                 dotPosCheck = 1f;
+            }
+            else
+            {
+                var v = p2 - p1;
+                var dir = v.normalized;
+                var cos = Mathf.Cos(_angle);
+                var sin = Mathf.Sin(_angle);
+                var newDir = new Vector2(cos * dir.x - sin * dir.y, sin * dir.x + cos * dir.y);
+                var pLen = v.magnitude * 0.5f / cos;
+                var p1V = newDir * pLen;
+                p1 = sourcePos + p1V;
+                p2 = p1;
             }
 
             Handles.BeginGUI();
@@ -198,6 +213,16 @@ namespace LevelDesignerEditor
         public void SetEdgeType(EdgeType edgeType)
         {
             Edge.Type = edgeType;
+        }
+
+        public void SetCurve(int count)
+        {
+            _angle = count <= 0 ? 0 : 20 * Mathf.Deg2Rad;
+        }
+
+        public void SetAngle(Vector2 vector2)
+        {
+            _angle = -Mathf.Atan2(vector2.y, vector2.x);
         }
     }
 }

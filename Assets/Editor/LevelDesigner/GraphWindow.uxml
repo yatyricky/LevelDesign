@@ -29,5 +29,6 @@
         <engine:Button name="load" text="打开"/>
         <engine:Button name="save" text="保存"/>
         <engine:Button name="save-as" text="另存为"/>
+        <engine:Label name="file-name"/>
     </engine:VisualElement>
 </engine:UXML>

@@ -65,8 +65,6 @@ namespace LevelDesigner
             {
                 var edge = edgeTrs.GetComponent<EdgeEditor>();
                 var e = graph.AddEdge(edge.from.name, edge.to.name, edge.type);
-                e.Angle = edge.angle;
-                e.Strength = edge.strength;
             }
 
             return graph;
@@ -137,8 +135,6 @@ namespace LevelDesigner
                 line.from = dict[edge.From.Name];
                 line.to = dict[edge.To.Name];
                 line.type = edge.Type;
-                line.angle = edge.Angle;
-                line.strength = edge.Strength;
             }
         }
 

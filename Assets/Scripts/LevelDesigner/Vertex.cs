@@ -13,17 +13,51 @@ namespace LevelDesigner
 
     public class Vertex
     {
-        public string Name;
+        private string _name;
+
+        public string Name
+        {
+            get => _name;
+            set
+            {
+                _name = value;
+            }
+        }
+
         public float Weight;
-        public VertexType Type;
+
+        private VertexType _type;
+
+        public VertexType Type
+        {
+            get => _type;
+            set
+            {
+                _type = value;
+                _graph.Dirty = true;
+            }
+        }
+
+        private Vector2 _position;
 
         /// <summary>
         /// For drawing
         /// </summary>
-        public Vector2 Position;
-
-        public Vertex(string name, float weight)
+        public Vector2 Position
         {
+            get => _position;
+            set
+            {
+                _position = value;
+                _graph.Dirty = true;
+            }
+        }
+
+        private Graph _graph;
+
+        public Vertex(string name, float weight, Graph graph)
+        {
+            _graph = graph;
             Name = name;
             Weight = weight;
         }
