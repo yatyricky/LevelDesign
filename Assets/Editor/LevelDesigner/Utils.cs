@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -142,6 +143,14 @@ namespace LevelDesignerEditor
             }
 
             parent.Sort((a, b) => dict[a] - dict[b]);
+        }
+
+        public static void ResizeArray<T>(ref T[] arr, int len)
+        {
+            if (arr.Length < len)
+            {
+                Array.Resize(ref arr, len);
+            }
         }
     }
 }

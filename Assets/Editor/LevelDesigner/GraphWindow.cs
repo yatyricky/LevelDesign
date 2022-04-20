@@ -494,7 +494,7 @@ namespace LevelDesignerEditor
         {
             // noes
             var currNodes = new HashSet<string>(_nodes.Keys);
-            for (var i = 0; i < _graphData.Vertices.Count; i++)
+            for (var i = 0; i < _graphData.VerticesLength; i++)
             {
                 var vertex = _graphData.Vertices[i];
                 Node node;

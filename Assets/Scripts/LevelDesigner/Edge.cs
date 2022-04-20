@@ -27,25 +27,19 @@
 
         private readonly Graph _graph;
 
-        private string Name
+        public static string GetNameID(string from, string to, EdgeType type)
         {
-            get
+            return type switch
             {
-                switch (Type)
-                {
-                    case EdgeType.Undirected:
-                        return $"{From.Name}--{To.Name}";
-                    case EdgeType.Directed:
-                        return $"{From.Name}->{To.Name}";
-                    case EdgeType.ShortCut:
-                        return $"{From.Name}>>{To.Name}";
-                    case EdgeType.Mechanism:
-                        return $"{From.Name}*>{To.Name}";
-                    default:
-                        return $"{From.Name}--{To.Name}";
-                }
-            }
+                EdgeType.Undirected => $"{from}--{to}",
+                EdgeType.Directed => $"{from}->{to}",
+                EdgeType.ShortCut => $"{from}>>{to}",
+                EdgeType.Mechanism => $"{from}*>{to}",
+                _ => $"{from}--{to}"
+            };
         }
+
+        public string Name => GetNameID(From.Name, To.Name, Type);
 
         public string NodesName => $"{From.Name}-{To.Name}";
 
