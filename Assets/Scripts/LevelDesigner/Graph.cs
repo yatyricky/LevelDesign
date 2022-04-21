@@ -438,7 +438,7 @@ namespace LevelDesigner
         {
             var combs = MathUtils.GetCombinations(Vertices, n);
             var count = 0;
-            Parallel.ForEach(combs, comb =>
+            foreach (var comb in combs)
             {
                 var g = Clone();
                 foreach (var vertex in comb)
@@ -450,13 +450,17 @@ namespace LevelDesigner
                 {
                     count++;
                 }
-            });
+            }
+            // Parallel.ForEach(combs, comb =>
+            // {
+            // });
 
             return 1f - (float) count / combs.Count;
         }
 
         public float CalculateNthOrderStabilityFactor(int n)
         {
+            var dt = DateTimeOffset.Now.ToUnixTimeMilliseconds();
             var top = 0f;
             var bottom = 0f;
             for (var i = 1; i <= n; i++)
@@ -466,6 +470,7 @@ namespace LevelDesigner
                 bottom += inv;
             }
 
+            Debug.Log($"==== PERF {DateTimeOffset.Now.ToUnixTimeMilliseconds() - dt} ms ====");
             return top / bottom;
         }
 
