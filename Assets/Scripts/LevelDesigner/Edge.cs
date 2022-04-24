@@ -63,6 +63,8 @@
             }
         }
 
+        internal int Index;
+
         public Edge(Vertex from, Vertex to, EdgeType type, Graph graph)
         {
             _graph = graph;
@@ -74,6 +76,12 @@
         public override string ToString()
         {
             return Name;
+        }
+
+        public Edge Clone()
+        {
+            var v = new Edge(From, To, Type, _graph);
+            return v;
         }
     }
 }

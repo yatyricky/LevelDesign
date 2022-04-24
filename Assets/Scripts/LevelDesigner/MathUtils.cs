@@ -6,14 +6,14 @@ namespace LevelDesigner
 {
     public class MathUtils
     {
-        public static List<List<T>> GetCombinations<T>(T[] list, int n)
+        public static List<List<T>> GetCombinations<T>(IList<T> list, int n)
         {
             if (n <= 0)
             {
                 return new List<List<T>>();
             }
 
-            var len = list.Length;
+            var len = list.Count;
             n = Math.Min(len, n);
             var ptrs = new List<int>();
             for (var i = 0; i < n; i++)

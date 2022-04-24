@@ -1,29 +1,21 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 using UnityEngine;
+using Debug = UnityEngine.Debug;
 
 namespace LevelDesigner
 {
     public class Graph
     {
-        private static readonly Regex EdgeDefine = new Regex(@"(?<from>\w+)[ \t]*(?<conn>[->\*]{2})[ \t]*(?<to>\w+)[ \t]*(#[ \t]*((angle[ \t]*:[ \t]*(?<angle>[\d-\.]+))|[ \t]|(strength[ \t]*:[ \t]*(?<strength>[\d-\.]+)))*)?", RegexOptions.Compiled);
-        private static readonly Regex VertexDefine = new Regex(@"#[ \t]*(?<name>\w+)[ \t]+((pos[ \t]*:[ \t]*\([ \t]*(?<posX>[\d\.-]+)[ \t]*,[ \t]*(?<posY>[\d\.-]+)[ \t]*\))|[ \t]|(type[ \t]*:[ \t]*(?<type>\w+)))*", RegexOptions.Compiled);
+        private static readonly Regex EdgeDefine = new(@"(?<from>\w+)[ \t]*(?<conn>[->\*]{2})[ \t]*(?<to>\w+)[ \t]*(#[ \t]*((angle[ \t]*:[ \t]*(?<angle>[\d-\.]+))|[ \t]|(strength[ \t]*:[ \t]*(?<strength>[\d-\.]+)))*)?", RegexOptions.Compiled);
+        private static readonly Regex VertexDefine = new(@"#[ \t]*(?<name>\w+)[ \t]+((pos[ \t]*:[ \t]*\([ \t]*(?<posX>[\d\.-]+)[ \t]*,[ \t]*(?<posY>[\d\.-]+)[ \t]*\))|[ \t]|(type[ \t]*:[ \t]*(?<type>\w+)))*", RegexOptions.Compiled);
 
-        public Vertex[] Vertices = new Vertex[0];
-
-        public int VerticesLength { get; private set; }
-
-        private Dictionary<string, int> _vertexIndexes = new();
-
-        public Edge[] Edges = new Edge[0];
-        private int _edgesLength;
-        private Dictionary<string, int> _edgeIndexes = new();
-
-        private HashSet<int>[] _vertexDegrees = new HashSet<int>[0];
+        public UnorderedList<Vertex> Vertices = new();
+        public UnorderedList<Edge> Edges = new();
+        private UnorderedList<UnorderedList<Vertex>> _vertexVertex = new();
+        private UnorderedList<UnorderedList<Edge>> _vertexEdge = new();
 
         private bool _dirty;
 
@@ -40,17 +32,26 @@ namespace LevelDesigner
             }
         }
 
-        public string TakeSnapShot()
+        public void TakeSnapShot(string reason)
         {
-            var sb = new StringBuilder();
-            sb.AppendLine($"Vertices: {string.Join(", ", from e in Vertices select e.Name)}");
-            sb.AppendLine($"VerticesLength: {VerticesLength}");
-            sb.AppendLine($"_vertexIndexes: {string.Join(", ", from kv in _vertexIndexes select $"[{kv.Key}]={kv.Value}")}");
-            sb.AppendLine($"Edges: {string.Join(", ", from e in Edges select e.Name)}");
-            sb.AppendLine($"_edgesLength: {_edgesLength}");
-            sb.AppendLine($"_edgeIndexes: {string.Join(", ", from kv in _edgeIndexes select $"[{kv.Key}]={kv.Value}")}");
-            sb.AppendLine($"_vertexDegrees: {string.Join("; ", from e in _vertexDegrees select string.Join(",", e))}");
-            return sb.ToString();
+            var sb = new System.Text.StringBuilder();
+            sb.AppendLine($"Vertices: {string.Join(",", from e in Vertices select $"[{e.Index}]{e.Name}")}");
+            sb.AppendLine($"Edges: {string.Join(",", from e in Edges select $"[{e.Index}]{e.From.Name}-{e.To.Name}")}");
+            sb.Append("_vertexVertex:");
+            for (var i = 0; i < _vertexVertex.Count; i++)
+            {
+                sb.Append($"[{i}]{string.Join(",", from v in _vertexVertex[i] select v.Index)} ");
+            }
+
+            sb.AppendLine();
+            sb.Append("_vertexEdge:");
+            for (var i = 0; i < _vertexEdge.Count; i++)
+            {
+                sb.Append($"[{i}]{string.Join(",", from v in _vertexEdge[i] select v.Index)} ");
+            }
+
+            sb.AppendLine();
+            Debug.Log($"{reason}\n{sb}");
         }
 
         public string Name { get; set; }
@@ -104,7 +105,7 @@ namespace LevelDesigner
                             break;
                     }
 
-                    g.AddEdge(@from, to, edgeType);
+                    g.FindOrAddEdge(from, to, edgeType);
 
                     continue;
                 }
@@ -164,13 +165,18 @@ namespace LevelDesigner
 
         private Vertex FindVertex(string name)
         {
-            var i = IndexOfVertex(name);
-            return i == -1 ? null : Vertices[i];
+            return Vertices.FirstOrDefault(vertex => vertex.Name == name);
         }
 
         public HashSet<string> GetVertexNames()
         {
-            return new(_vertexIndexes.Keys);
+            var set = new HashSet<string>();
+            foreach (var vertex in Vertices)
+            {
+                set.Add(vertex.Name);
+            }
+
+            return set;
         }
 
         public Vertex AddVertex()
@@ -189,28 +195,15 @@ namespace LevelDesigner
 
         public Vertex AddVertex(string name, float weight = 1f)
         {
-            var curr = FindVertex(name);
-            if (curr != null)
+            var vertex = new Vertex(name, weight, this)
             {
-                return curr;
-            }
+                Index = Vertices.Count
+            };
+            Vertices.Add(vertex);
+            _vertexVertex.Add(new UnorderedList<Vertex>());
+            _vertexEdge.Add(new UnorderedList<Edge>());
 
-            var vertex = new Vertex(name, weight, this);
-            var i = VerticesLength++;
-            _vertexIndexes.Add(name, i);
-            if (Vertices.Length < VerticesLength)
-            {
-                Array.Resize(ref Vertices, VerticesLength);
-            }
-
-            Vertices[i] = vertex;
-
-            if (_vertexDegrees.Length < VerticesLength)
-            {
-                Array.Resize(ref _vertexDegrees, VerticesLength);
-            }
-
-            _vertexDegrees[i] ??= new HashSet<int>();
+            // TakeSnapShot($"AddVertex {name}");
 
             Dirty = true;
             return vertex;
@@ -221,61 +214,39 @@ namespace LevelDesigner
             return FindVertex(name) ?? AddVertex(name);
         }
 
-        public Vertex RemoveVertex(string name)
-        {
-            return RemoveVertex(IndexOfVertex(name));
-        }
+        // public Vertex RemoveVertex(string name)
+        // {
+        //     return RemoveVertex(IndexOfVertex(name));
+        // }
 
         public Vertex RemoveVertex(Vertex vertex)
         {
-            if (vertex == null)
-            {
-                return null;
-            }
-
-            return RemoveVertex(IndexOfVertex(vertex.Name));
+            return RemoveVertex(vertex.Index);
         }
 
         public Vertex RemoveVertex(int index)
         {
-            var vertex = Vertices[index];
-            var len = _edgesLength - 1;
-            for (var i = len; i >= 0; i--)
+            // TakeSnapShot($"Will RemoveVertex {index}");
+            var edges = _vertexEdge[index];
+            for (var i = edges.Count - 1; i >= 0; i--)
             {
-                var edge = Edges[i];
-                if (edge.From == vertex || edge.To == vertex)
-                {
-                    RemoveEdge(i);
-                }
+                RemoveEdge(edges[i]);
             }
 
-            var lastI = --VerticesLength;
-            var last = Vertices[lastI];
-            var lastDegrees = _vertexDegrees[lastI];
-            Vertices[index] = last;
-            _vertexDegrees[index] = lastDegrees;
-            _vertexIndexes[last.Name] = index;
-            for (int i = 0; i < VerticesLength; i++)
+            var vertex = Vertices[index];
+            Vertices.RemoveAt(index);
+            if (index < Vertices.Count)
             {
-                var set = _vertexDegrees[i];
-                if (set.Contains(lastI))
-                {
-                    set.Remove(lastI);
-                    var res = set.Add(index);
-                    if (!res)
-                    {
-                        throw new Exception("??");
-                    }
-                }
+                Vertices[index].Index = index;
             }
+
+            _vertexVertex.RemoveAt(index);
+            _vertexEdge.RemoveAt(index);
+
+            // TakeSnapShot($"Did RemoveVertex {index}");
 
             Dirty = true;
             return vertex;
-        }
-
-        public int IndexOfVertex(string name)
-        {
-            return _vertexIndexes.TryGetValue(name, out var i) ? i : -1;
         }
 
         // public List<Edge> GetOutgoingEdges(string name)
@@ -292,63 +263,58 @@ namespace LevelDesigner
 
         #region edge
 
-        public int IndexOfEdge(string idName)
-        {
-            return _edgeIndexes.TryGetValue(idName, out var i) ? i : -1;
-        }
+        // public Edge FindEdge(string idName)
+        // {
+        //     var i = IndexOfEdge(idName);
+        //     return i == -1 ? null : Edges[i];
+        // }
 
-        public Edge FindEdge(string idName)
+        public Edge AddEdge(Vertex from, Vertex to, EdgeType type = EdgeType.Undirected)
         {
-            var i = IndexOfEdge(idName);
-            return i == -1 ? null : Edges[i];
-        }
-
-        public Edge AddEdge(string from, string to, EdgeType type = EdgeType.Undirected)
-        {
-            var edgeName = Edge.GetNameID(from, to, type);
-            var find = FindEdge(edgeName);
-            if (find != null)
+            var edge = new Edge(from, to, type, this)
             {
-                return find;
+                Index = Edges.Count
+            };
+            Edges.Add(edge);
+            _vertexVertex[from.Index].Add(to);
+            _vertexEdge[from.Index].Add(edge);
+            if (from != to)
+            {
+                _vertexVertex[to.Index].Add(from);
+                _vertexEdge[to.Index].Add(edge);
             }
 
-            var fromVertI = IndexOfVertex(from);
-            var toVertI = IndexOfVertex(to);
-            var nodeFrom = Vertices[fromVertI];
-            var nodeTo = Vertices[toVertI];
-            var edge = new Edge(nodeFrom, nodeTo, type, this);
-            var i = _edgesLength++;
-            _edgeIndexes[edgeName] = i;
-            if (_edgesLength > Edges.Length)
-            {
-                Array.Resize(ref Edges, _edgesLength);
-            }
-
-            Edges[i] = edge;
-
-            var fromI = IndexOfVertex(from);
-            _vertexDegrees[fromI].Add(toVertI);
-
-            var toI = IndexOfVertex(to);
-            _vertexDegrees[toI].Add(fromVertI);
+            // TakeSnapShot($"AddEdge {from.Name} {to.Name}");
 
             Dirty = true;
             return edge;
         }
 
+        public Edge FindEdge(string from, string to)
+        {
+            return Edges.FirstOrDefault(e => e.From.Name == from && e.To.Name == to);
+        }
+
+        public Edge FindOrAddEdge(string from, string to, EdgeType type = EdgeType.Undirected)
+        {
+            return FindEdge(from, to) ?? AddEdge(FindVertex(from), FindVertex(to), type);
+        }
+
         public Edge RemoveEdge(int index)
         {
-            var last = Edges[--_edgesLength];
             var edge = Edges[index];
-            Edges[index] = last;
-            _edgeIndexes[last.Name] = index;
+            Edges.RemoveAt(index);
+            if (index < Edges.Count)
+            {
+                Edges[index].Index = index;
+            }
 
-            var from = edge.From;
-            var to = edge.To;
-            var fromI = IndexOfVertex(from.Name);
-            var toI = IndexOfVertex(to.Name);
-            _vertexDegrees[fromI].Remove(toI);
-            _vertexDegrees[toI].Remove(fromI);
+            _vertexVertex[edge.From.Index].Remove(edge.To);
+            _vertexVertex[edge.To.Index].Remove(edge.From);
+
+            _vertexEdge[edge.From.Index].Remove(edge);
+            _vertexEdge[edge.To.Index].Remove(edge);
+            // TakeSnapShot($"RemoveEdge {index}");
 
             Dirty = true;
             return edge;
@@ -356,12 +322,7 @@ namespace LevelDesigner
 
         public Edge RemoveEdge(Edge edge)
         {
-            if (edge == null)
-            {
-                return null;
-            }
-
-            return RemoveEdge(IndexOfEdge(edge.Name));
+            return RemoveEdge(edge.Index);
         }
 
         #endregion
@@ -370,36 +331,44 @@ namespace LevelDesigner
         {
             get
             {
-                var visited = new bool[VerticesLength];
+                var visited = new bool[Vertices.Count];
 
-                for (var i = 0; i < VerticesLength; i++)
-                    visited[i] = false; // Mark all nodes as unvisited.
+                // Mark all nodes as unvisited.
+                for (var i = 0; i < Vertices.Count; i++)
+                {
+                    visited[i] = false;
+                }
 
                 var compNum = 0; // For counting connected components.
-                for (var v = 0; v < VerticesLength; v++)
+                for (var v = 0; v < Vertices.Count; v++)
                 {
                     // If v is not yet visited, it’s the start of a newly
                     // discovered connected component containing v.
                     if (visited[v])
+                    {
                         continue;
+                    }
 
                     // Process the component that contains v.
                     compNum++;
                     var q = new Queue<int>(); // For implementing a breadth-first traversal.
                     q.Enqueue(v); // Start the traversal from vertex v.
                     visited[v] = true;
-                    while (q.Any())
+                    while (q.Count > 0)
                     {
                         var w = q.Dequeue(); // w is a node in this component.
 
-                        foreach (var k in _vertexDegrees[w])
+                        for (var i = 0; i < _vertexVertex[w].Count; i++)
                         {
-                            if (visited[k])
+                            var k = _vertexVertex[w][i];
+                            if (visited[k.Index])
+                            {
                                 continue;
+                            }
 
                             // We’ve found another node in this component.
-                            visited[k] = true;
-                            q.Enqueue(k);
+                            visited[k.Index] = true;
+                            q.Enqueue(k.Index);
                         }
                     }
                 }
@@ -412,15 +381,16 @@ namespace LevelDesigner
         {
             get
             {
-                for (var n = 1; n < VerticesLength; n++)
+                for (var n = 1; n < Vertices.Count; n++)
                 {
                     var combs = MathUtils.GetCombinations(Vertices, n);
-                    foreach (var comb in combs)
+                    for (var i = 0; i < combs.Count; i++)
                     {
-                        var g = Clone();
-                        foreach (var vertex in comb)
+                        var comb = combs[i];
+                        var g = ShallowClone();
+                        for (var j = 0; j < comb.Count; j++)
                         {
-                            g.RemoveVertex(vertex.Name);
+                            g.RemoveVertex(comb[j].Index);
                         }
 
                         if (!g.IsConnected)
@@ -430,7 +400,7 @@ namespace LevelDesigner
                     }
                 }
 
-                return VerticesLength;
+                return Vertices.Count;
             }
         }
 
@@ -438,12 +408,13 @@ namespace LevelDesigner
         {
             var combs = MathUtils.GetCombinations(Vertices, n);
             var count = 0;
-            foreach (var comb in combs)
+            for (var i = 0; i < combs.Count; i++)
             {
-                var g = Clone();
-                foreach (var vertex in comb)
+                var comb = combs[i];
+                var g = ShallowClone();
+                for (var j = 0; j < comb.Count; j++)
                 {
-                    g.RemoveVertex(vertex);
+                    g.RemoveVertex(comb[j]);
                 }
 
                 if (!g.IsConnected)
@@ -451,9 +422,6 @@ namespace LevelDesigner
                     count++;
                 }
             }
-            // Parallel.ForEach(combs, comb =>
-            // {
-            // });
 
             return 1f - (float) count / combs.Count;
         }
@@ -470,6 +438,16 @@ namespace LevelDesigner
                 bottom += inv;
             }
 
+            for (var i = 0; i < Vertices.Count; i++)
+            {
+                Vertices[i].Index = i;
+            }
+
+            for (var i = 0; i < Edges.Count; i++)
+            {
+                Edges[i].Index = i;
+            }
+
             Debug.Log($"==== PERF {DateTimeOffset.Now.ToUnixTimeMilliseconds() - dt} ms ====");
             return top / bottom;
         }
@@ -479,23 +457,31 @@ namespace LevelDesigner
             return $"{string.Join("\n", from edge in Edges select edge.ToString())}\n\n{string.Join("\n", from vertex in Vertices select vertex.ToString())}";
         }
 
-        public Graph Clone()
+        private Graph ShallowClone()
         {
             var g = new Graph();
-            Array.Resize(ref g.Vertices, VerticesLength);
-            Array.Copy(Vertices, g.Vertices, VerticesLength);
-            g.VerticesLength = VerticesLength;
-            g._vertexIndexes = new Dictionary<string, int>(_vertexIndexes);
-
-            Array.Resize(ref g.Edges, _edgesLength);
-            Array.Copy(Edges, g.Edges, _edgesLength);
-            g._edgesLength = _edgesLength;
-            g._edgeIndexes = new Dictionary<string, int>(_edgeIndexes);
-
-            Array.Resize(ref g._vertexDegrees, VerticesLength);
-            for (var i = 0; i < VerticesLength; i++)
+            g.Vertices = Vertices.Clone();
+            for (var i = 0; i < Vertices.Count; i++)
             {
-                g._vertexDegrees[i] = new HashSet<int>(_vertexDegrees[i]);
+                g.Vertices[i].Index = i;
+            }
+
+            g.Edges = Edges.Clone();
+            for (var i = 0; i < Edges.Count; i++)
+            {
+                g.Edges[i].Index = i;
+            }
+
+            g._vertexVertex = new UnorderedList<UnorderedList<Vertex>>(_vertexVertex.Count);
+            for (int i = 0, n = _vertexVertex.Count; i < n; i++)
+            {
+                g._vertexVertex.Add(_vertexVertex[i].Clone());
+            }
+
+            g._vertexEdge = new UnorderedList<UnorderedList<Edge>>(_vertexEdge.Count);
+            for (int i = 0, n = _vertexEdge.Count; i < n; i++)
+            {
+                g._vertexEdge.Add(_vertexEdge[i].Clone());
             }
 
             return g;

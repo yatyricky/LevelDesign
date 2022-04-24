@@ -60,7 +60,9 @@ namespace LevelDesigner
             }
         }
 
-        private Graph _graph;
+        internal int Index;
+
+        private readonly Graph _graph;
 
         public Vertex(string name, float weight, Graph graph)
         {
@@ -89,6 +91,14 @@ namespace LevelDesigner
         public override string ToString()
         {
             return $"#{Name} pos:({Position.x:0.00},{Position.y:0.00}) type:{NodeTypeToString()} weight:{Weight}";
+        }
+
+        public Vertex Clone()
+        {
+            var v = new Vertex(Name, Weight, _graph);
+            v._position = _position;
+            v._type = _type;
+            return v;
         }
     }
 }

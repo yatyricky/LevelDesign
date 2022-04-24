@@ -64,7 +64,7 @@ namespace LevelDesigner
             foreach (Transform edgeTrs in edges)
             {
                 var edge = edgeTrs.GetComponent<EdgeEditor>();
-                var e = graph.AddEdge(edge.from.name, edge.to.name, edge.type);
+                var e = graph.FindOrAddEdge(edge.from.name, edge.to.name, edge.type);
             }
 
             return graph;
@@ -138,11 +138,18 @@ namespace LevelDesigner
             }
         }
 
-        [MenuItem("Calculate/Parser")]
+        [MenuItem("Test/Parser")]
         public static void Parser()
         {
             var g = Graph.Parse(File.ReadAllText("Assets/graph.txt"));
             Debug.Log(g);
+        }
+
+        [MenuItem("Test/3rd order SF")]
+        public static void Calculate3RdOrderStabilityFactor()
+        {
+            var g = Graph.Parse(File.ReadAllText("Assets/Levels/simple.txt"));
+            Debug.Log(g.CalculateNthOrderStabilityFactor(3));
         }
     }
 }

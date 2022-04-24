@@ -205,10 +205,12 @@ namespace LevelDesignerEditor
                     if (_editingConnection != null)
                     {
                         _graphData.RemoveEdge(_editingConnection.Edge);
+                        SetEditingConnection(null);
                     }
                     else if (_editingNode != null)
                     {
                         _graphData.RemoveVertex(_editingNode.Vertex);
+                        SetEditingNode(null);
                     }
 
                     break;
@@ -406,7 +408,7 @@ namespace LevelDesignerEditor
                     _currAct = ActionType.None;
                     if (_connEndNode != null)
                     {
-                        _graphData.AddEdge(_connStartNode.Vertex.Name, _connEndNode.Vertex.Name);
+                        _graphData.FindOrAddEdge(_connStartNode.Vertex.Name, _connEndNode.Vertex.Name);
                     }
 
                     SetEndConnectionNode(null, Vector2.zero);
@@ -494,7 +496,7 @@ namespace LevelDesignerEditor
         {
             // noes
             var currNodes = new HashSet<string>(_nodes.Keys);
-            for (var i = 0; i < _graphData.VerticesLength; i++)
+            for (var i = 0; i < _graphData.Vertices.Count; i++)
             {
                 var vertex = _graphData.Vertices[i];
                 Node node;
