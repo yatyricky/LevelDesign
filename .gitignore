@@ -27,6 +27,7 @@
 .vs/
 
 .idea/
+ProjectSettings/RiderScriptEditorPersistedState.asset
 
 # Gradle cache directory
 .gradle/
