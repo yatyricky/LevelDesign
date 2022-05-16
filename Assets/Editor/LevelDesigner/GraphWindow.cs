@@ -38,6 +38,7 @@ namespace LevelDesignerEditor
         private VisualElement _rootNodes, _rootConnections;
         private Button _new, _load, _save, _saveAs;
         private Button _stability;
+        private Button _reverseConn;
         private Label _fileName;
         private Dictionary<string, Node> _nodes;
         private Dictionary<string, Connection> _connections;
@@ -101,6 +102,8 @@ namespace LevelDesignerEditor
             _saveAs.clickable.clicked += SaveAsSource;
             _stability = root.Q<Button>("stability");
             _stability.clickable.clicked += CalculateStability;
+            _reverseConn = root.Q<Button>("reverse-conn");
+            _reverseConn.clickable.clicked += ReverseConnection;
 
             // header 
             _fileName = root.Q<Label>("file-name");
@@ -137,6 +140,19 @@ namespace LevelDesignerEditor
             _body.RegisterCallback<MouseMoveEvent>(OnMouseMove);
             _body.RegisterCallback<MouseUpEvent>(OnMouseUp);
             _body.RegisterCallback<MouseOutEvent>(OnMouseOut);
+        }
+
+        private void ReverseConnection()
+        {
+            if (_editingConnection == null)
+            {
+                return;
+            }
+
+            var edge = _editingConnection.Edge;
+            var vert = edge.From;
+            edge.From = edge.To;
+            edge.To = vert;
         }
 
         private void CalculateStability()
@@ -232,6 +248,7 @@ namespace LevelDesignerEditor
             _save.clickable.clicked -= SaveSource;
             _saveAs.clickable.clicked -= SaveAsSource;
             _stability.clickable.clicked -= CalculateStability;
+            _reverseConn.clickable.clicked -= ReverseConnection;
         }
 
         private Node RaycastNodeBorder(Vector2 mousePos)

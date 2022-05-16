@@ -21,6 +21,7 @@
             <engine:VisualElement name="connection-editor" class="data-editor">
                 <engine:Label text="编辑连接" class="field title2"/>
                 <editor:ToolbarMenu name="connection-type" class="field"/>
+                <engine:Button name="reverse-conn" text="反转" />
             </engine:VisualElement>
         </engine:VisualElement>
     </engine:VisualElement>
