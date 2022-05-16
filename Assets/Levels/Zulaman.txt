@@ -1,20 +1,20 @@
 Wreck--Gate
 Gate--Ritual
-Gate--Tinker
+Ritual>>Wreck
 Tinker--Library
-Library--GateWallW
+GateWallW>>Library
 Library--Stream
-Stream--Witch
+Misty--FoundryE
 Stream--LShrineW
 Witch--Swamp
-Swamp->LShrineE
-Swamp--HShrine
+Witch->Stream
+Warlock--Training
 HShrine>>Gate
-HShrine--Altar2
+HShrine--LShrineE
 Altar2--WaterEle
-Altar2--Sentinel
-Sentinel>>FoundryW
-Sentinel->FoundryE
+LShrineW*>HShrine
+Swamp>>Stream
+WaterEle--Sentinel
 Sentinel--GateWallE
 FoundryE--FoundryW
 FoundryW--Warlock
@@ -37,27 +37,41 @@ LShrineN>>HShrine
 Hex*>LShrineN
 Ghost--Hex
 Hex--Ancient
+Gate->Woods
+Woods--Tinker
+Woods--Outskirt
+Outskirt>>Ritual
+Outskirt->Gate
+LShrineW--GateWallW
+FoundryE--Training
+GateWallE--Training
+Altar2>>HShrine
+Training--FoundryW
+GateWallW--Swamp
+LShrineE--Altar2
+Warlock--Misty
+GateWallE>>Wreck
 
-#Wreck pos:(2.40,-7.18) type:start weight:1
-#Gate pos:(-2.23,-7.22) type:poi weight:1
-#Ritual pos:(0.05,-5.96) type:poi weight:1
+#Wreck pos:(1.42,-7.52) type:start weight:1
+#Gate pos:(-2.24,-7.22) type:poi weight:1
+#Ritual pos:(-0.56,-6.16) type:poi weight:1
 #Tinker pos:(-7.81,-6.79) type:boss weight:1
-#Library pos:(-7.39,-4.78) type:poi weight:1
-#GateWallW pos:(-2.96,-4.82) type:poi weight:1
-#Stream pos:(-6.57,-3.37) type:save weight:1
+#Library pos:(-6.42,-4.92) type:save weight:1
+#GateWallW pos:(-3.60,-4.64) type:poi weight:1
+#Stream pos:(-6.12,-3.34) type:poi weight:1
 #Witch pos:(-9.43,-2.84) type:boss weight:1
-#LShrineW pos:(-4.58,-3.22) type:poi weight:1
-#Swamp pos:(-5.82,-0.97) type:poi weight:1
-#LShrineE pos:(-2.79,-2.98) type:poi weight:1
-#HShrine pos:(-1.02,-2.18) type:poi weight:1
-#Altar2 pos:(1.04,-3.64) type:save weight:1
-#WaterEle pos:(1.24,-1.41) type:boss weight:1
-#Sentinel pos:(4.10,-4.15) type:save weight:1
-#FoundryW pos:(6.38,0.39) type:poi weight:1
+#LShrineW pos:(-4.14,-2.52) type:poi weight:1
+#Swamp pos:(-5.90,-1.46) type:poi weight:1
+#LShrineE pos:(-1.30,-3.62) type:poi weight:1
+#HShrine pos:(-2.24,-2.06) type:save weight:1
+#Altar2 pos:(0.40,-2.80) type:poi weight:1
+#WaterEle pos:(1.82,-1.90) type:boss weight:1
+#Sentinel pos:(4.22,-4.54) type:poi weight:1
+#GateWallE pos:(-0.06,-4.72) type:poi weight:1
 #FoundryE pos:(7.98,-0.97) type:poi weight:1
-#GateWallE pos:(-0.80,-4.80) type:poi weight:1
+#FoundryW pos:(5.92,0.60) type:save weight:1
 #Warlock pos:(3.90,0.39) type:boss weight:1
-#Misty pos:(6.59,3.01) type:poi weight:1
+#Misty pos:(6.30,3.62) type:poi weight:1
 #Dracolich pos:(3.90,3.01) type:poi weight:1
 #CatacombE pos:(9.36,6.18) type:poi weight:1
 #CatacombW pos:(5.72,6.59) type:save weight:1
@@ -68,7 +82,10 @@ Hex--Ancient
 #Catapult pos:(-4.44,7.18) type:poi weight:1
 #Guard pos:(-4.61,3.20) type:boss weight:1
 #Altar4 pos:(-3.01,1.43) type:poi weight:1
-#LShrineN pos:(-0.27,0.48) type:poi weight:1
+#LShrineN pos:(-0.72,-0.68) type:poi weight:1
 #Ghost pos:(-1.21,2.98) type:save weight:1
 #Hex pos:(0.99,3.85) type:boss weight:1
 #Ancient pos:(0.95,5.65) type:boss weight:1
+#Woods pos:(-5.64,-7.12) type:poi weight:1
+#Outskirt pos:(-4.72,-5.90) type:poi weight:1
+#Training pos:(4.92,-2.42) type:poi weight:1
