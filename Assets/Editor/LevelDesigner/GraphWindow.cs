@@ -233,11 +233,21 @@ namespace LevelDesignerEditor
                 case KeyCode.Escape:
                     Close();
                     break;
+
+                case KeyCode.S:
+                    if (current.control)
+                    {
+                        SaveSource();
+                    }
+
+                    break;
             }
         }
 
         private void OnDisable()
         {
+            SaveSource();
+
             _body.UnregisterCallback<MouseDownEvent>(OnMouseDown);
             _body.UnregisterCallback<MouseMoveEvent>(OnMouseMove);
             _body.UnregisterCallback<MouseUpEvent>(OnMouseUp);
