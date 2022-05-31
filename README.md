@@ -4,7 +4,7 @@ A Unity implementation of https://zhuanlan.zhihu.com/p/415025159
 
 ## Definition
 
-### Stability Factor $\gamma$ (稳定因子) [1]
+### Stability Factor γ (稳定因子) [1]
 
 A normalized and fast converging scalar that is calculated out from various orders of Cheeger constant.
 
