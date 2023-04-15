@@ -2,9 +2,9 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace LevelDesigner
+namespace NefAndFriends.LevelDesigner
 {
-    public class MathUtils
+    public static class MathUtils
     {
         public static List<List<T>> GetCombinations<T>(IList<T> list, int n)
         {

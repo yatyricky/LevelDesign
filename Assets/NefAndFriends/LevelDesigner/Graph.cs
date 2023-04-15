@@ -5,7 +5,7 @@ using System.Text.RegularExpressions;
 using UnityEngine;
 using Debug = UnityEngine.Debug;
 
-namespace LevelDesigner
+namespace NefAndFriends.LevelDesigner
 {
     public class Graph
     {
@@ -423,7 +423,7 @@ namespace LevelDesigner
                 }
             }
 
-            return 1f - (float) count / combs.Count;
+            return 1f - (float)count / combs.Count;
         }
 
         public float CalculateNthOrderStabilityFactor(int n)
@@ -459,8 +459,10 @@ namespace LevelDesigner
 
         private Graph ShallowClone()
         {
-            var g = new Graph();
-            g.Vertices = Vertices.Clone();
+            var g = new Graph
+            {
+                Vertices = Vertices.Clone()
+            };
             for (var i = 0; i < Vertices.Count; i++)
             {
                 g.Vertices[i].Index = i;

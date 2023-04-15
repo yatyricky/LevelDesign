@@ -1,7 +1,7 @@
 ﻿using System;
 using UnityEngine;
 
-namespace LevelDesigner
+namespace NefAndFriends.LevelDesigner
 {
     public enum VertexType
     {
@@ -95,9 +95,11 @@ namespace LevelDesigner
 
         public Vertex Clone()
         {
-            var v = new Vertex(Name, Weight, _graph);
-            v._position = _position;
-            v._type = _type;
+            var v = new Vertex(Name, Weight, _graph)
+            {
+                _position = _position,
+                _type = _type
+            };
             return v;
         }
     }

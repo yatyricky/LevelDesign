@@ -2,7 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 
-namespace LevelDesigner
+namespace NefAndFriends.LevelDesigner
 {
     public class UnorderedList<T> : IList<T>
     {

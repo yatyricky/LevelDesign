@@ -1,10 +1,10 @@
 ﻿using System;
+using NefAndFriends.LevelDesigner;
 using UnityEngine;
-using LevelDesigner;
 using UnityEditor;
 using UnityEngine.UIElements;
 
-namespace LevelDesignerEditor
+namespace NefAndFriends.LevelDesignerEditor
 {
     public class Connection : IDisposable
     {
@@ -20,7 +20,7 @@ namespace LevelDesignerEditor
             get
             {
                 if (_pathTexInternal == null)
-                    _pathTexInternal = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/Editor/Textures/line.png");
+                    _pathTexInternal = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/NefAndFriends/Editor/Textures/line.png");
                 return _pathTexInternal;
             }
         }
@@ -32,14 +32,15 @@ namespace LevelDesignerEditor
             get
             {
                 if (_pathTexHighInternal == null)
-                    _pathTexHighInternal = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/Editor/Textures/line_up.png");
+                    _pathTexHighInternal = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/NefAndFriends/Editor/Textures/line_up.png");
                 return _pathTexHighInternal;
             }
         }
 
         public VisualElement DOM { get; }
 
-        private Node _source, _target;
+        private readonly Node _source;
+        private readonly Node _target;
         public Edge Edge { get; }
 
         private Vector3[] _pathPoints;

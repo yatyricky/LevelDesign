@@ -3,7 +3,7 @@ using Sirenix.OdinInspector;
 using UnityEditor;
 using UnityEngine;
 
-namespace LevelDesignerEditor
+namespace NefAndFriends.LevelDesignerEditor
 {
     [CreateAssetMenu]
     public class Debugger : ScriptableObject
@@ -16,7 +16,7 @@ namespace LevelDesignerEditor
             {
                 if (_asset == null)
                 {
-                    _asset = AssetDatabase.LoadAssetAtPath<Debugger>("Assets/Editor/window debugger.asset");
+                    _asset = AssetDatabase.LoadAssetAtPath<Debugger>("Assets/NefAndFriends/Editor/window debugger.asset");
                 }
 
                 return _asset;

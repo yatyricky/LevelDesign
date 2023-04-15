@@ -2,13 +2,14 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using LevelDesigner;
+using JetBrains.Annotations;
+using NefAndFriends.LevelDesigner;
 using UnityEditor;
 using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-namespace LevelDesignerEditor
+namespace NefAndFriends.LevelDesignerEditor
 {
     public class GraphWindow : EditorWindow
     {
@@ -73,9 +74,9 @@ namespace LevelDesignerEditor
 
             // view
             var root = rootVisualElement;
-            var xml = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>("Assets/Editor/LevelDesigner/GraphWindow.uxml");
+            var xml = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>("Assets/NefAndFriends/Editor/GraphWindow.uxml");
             var dom = xml.CloneTree();
-            var css = AssetDatabase.LoadAssetAtPath<StyleSheet>("Assets/Editor/LevelDesigner/GraphWindow.uss");
+            var css = AssetDatabase.LoadAssetAtPath<StyleSheet>("Assets/NefAndFriends/Editor/GraphWindow.uss");
             dom.styleSheets.Add(css);
 
             root.Add(dom);
@@ -150,9 +151,7 @@ namespace LevelDesignerEditor
             }
 
             var edge = _editingConnection.Edge;
-            var vert = edge.From;
-            edge.From = edge.To;
-            edge.To = vert;
+            (edge.From, edge.To) = (edge.To, edge.From);
         }
 
         private void CalculateStability()
@@ -173,12 +172,12 @@ namespace LevelDesignerEditor
                 return DropdownMenuAction.Status.Normal;
             }
 
-            return _editingConnection.Edge.Type == (EdgeType) arg.userData ? DropdownMenuAction.Status.Checked : DropdownMenuAction.Status.Normal;
+            return _editingConnection.Edge.Type == (EdgeType)arg.userData ? DropdownMenuAction.Status.Checked : DropdownMenuAction.Status.Normal;
         }
 
         private void SetConnectionEditorType(DropdownMenuAction obj)
         {
-            _editingConnection?.SetEdgeType((EdgeType) obj.userData);
+            _editingConnection?.SetEdgeType((EdgeType)obj.userData);
         }
 
         private DropdownMenuAction.Status GetNodeEditorType(DropdownMenuAction arg)
@@ -188,12 +187,12 @@ namespace LevelDesignerEditor
                 return DropdownMenuAction.Status.Normal;
             }
 
-            return _editingNode.Vertex.Type == (VertexType) arg.userData ? DropdownMenuAction.Status.Checked : DropdownMenuAction.Status.Normal;
+            return _editingNode.Vertex.Type == (VertexType)arg.userData ? DropdownMenuAction.Status.Checked : DropdownMenuAction.Status.Normal;
         }
 
         private void SetNodeEditorType(DropdownMenuAction obj)
         {
-            _editingNode?.SetVertexType((VertexType) obj.userData);
+            _editingNode?.SetVertexType((VertexType)obj.userData);
         }
 
         private void OnGUI()
@@ -704,6 +703,7 @@ namespace LevelDesignerEditor
             return node;
         }
 
+        [UsedImplicitly]
         private Node RemoveNode(string nodeName)
         {
             if (_nodes.TryGetValue(nodeName, out var node))
@@ -717,6 +717,7 @@ namespace LevelDesignerEditor
             return null;
         }
 
+        [UsedImplicitly]
         private Connection AddConnection(Edge edge)
         {
             var fromNodeName = edge.From.Name;
@@ -729,6 +730,7 @@ namespace LevelDesignerEditor
             return connection;
         }
 
+        [UsedImplicitly]
         private Connection RemoveConnection(string connectionName)
         {
             if (_connections.TryGetValue(connectionName, out var connection))
@@ -758,8 +760,10 @@ namespace LevelDesignerEditor
 
         private void NewSource()
         {
-            _graphData = new Graph();
-            _graphData.Name = "New Graph.txt";
+            _graphData = new Graph
+            {
+                Name = "New Graph.txt"
+            };
             _graphData.AddVertex("Start");
         }
 

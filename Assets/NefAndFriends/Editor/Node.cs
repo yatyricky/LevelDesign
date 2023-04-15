@@ -1,9 +1,9 @@
 ﻿using System;
-using LevelDesigner;
+using NefAndFriends.LevelDesigner;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-namespace LevelDesignerEditor
+namespace NefAndFriends.LevelDesignerEditor
 {
     public class Node : IDisposable
     {

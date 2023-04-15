@@ -1,4 +1,4 @@
-﻿namespace LevelDesigner
+﻿namespace NefAndFriends.LevelDesigner
 {
     public enum EdgeType
     {
@@ -49,17 +49,7 @@
             {
                 var fromName = From.Name;
                 var toName = To.Name;
-                string sameKey;
-                if (string.CompareOrdinal(fromName, toName) <= 0)
-                {
-                    sameKey = $"{fromName}-{toName}";
-                }
-                else
-                {
-                    sameKey = $"{toName}-{fromName}";
-                }
-
-                return sameKey;
+                return string.CompareOrdinal(fromName, toName) <= 0 ? $"{fromName}-{toName}" : $"{toName}-{fromName}";
             }
         }
 

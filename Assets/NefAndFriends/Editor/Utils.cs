@@ -4,7 +4,7 @@ using System.Linq;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-namespace LevelDesignerEditor
+namespace NefAndFriends.LevelDesignerEditor
 {
     public struct Ring
     {
@@ -61,15 +61,15 @@ namespace LevelDesignerEditor
         }
     }
 
-    public class Utils
+    public static class Utils
     {
-        public static Vector2 GetDOMLocalPosition(VisualElement ve)
+        private static Vector2 GetDOMLocalPosition(VisualElement ve)
         {
             var style = ve.style;
             return new Vector2(style.left.value.value, style.top.value.value);
         }
 
-        public static Vector2 GetRelativePosition(VisualElement ve, string targetName)
+        private static Vector2 GetRelativePosition(VisualElement ve, string targetName)
         {
             var curr = ve;
             var pos = new Vector2();
