@@ -58,3 +58,7 @@ D->D
 
 - [1]尼莫. (2021). 如何设计一张有“魂味”的地图？——论“类魂”游戏关卡的拓扑结构. https://zhuanlan.zhihu.com/p/415025159
 - [2]https://en.wikipedia.org/wiki/Cheeger_constant_(graph_theory)
+
+# Credits
+
+- Tilemap assets: https://cainos.itch.io/pixel-art-top-down-basic
