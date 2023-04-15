@@ -2,17 +2,20 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
+using JetBrains.Annotations;
 using UnityEngine;
 
 namespace NefAndFriends.LevelDesigner
 {
+    [Serializable]
     public class Graph
     {
         private static readonly Regex EdgeDefine = new(@"(?<from>\w+)[ \t]*(?<conn>[->\*]{2})[ \t]*(?<to>\w+)[ \t]*(#[ \t]*((angle[ \t]*:[ \t]*(?<angle>[\d-\.]+))|[ \t]|(strength[ \t]*:[ \t]*(?<strength>[\d-\.]+)))*)?", RegexOptions.Compiled);
         private static readonly Regex VertexDefine = new(@"#[ \t]*(?<name>\w+)[ \t]+((pos[ \t]*:[ \t]*\([ \t]*(?<posX>[\d\.-]+)[ \t]*,[ \t]*(?<posY>[\d\.-]+)[ \t]*\))|[ \t]|(type[ \t]*:[ \t]*(?<type>\w+)))*", RegexOptions.Compiled);
 
-        public UnorderedList<Vertex> Vertices = new();
-        public UnorderedList<Edge> Edges = new();
+        public UnorderedList<Vertex> vertices = new();
+        public UnorderedList<Edge> edges = new();
+
         private UnorderedList<UnorderedList<Vertex>> _vertexVertex = new();
         private UnorderedList<UnorderedList<Edge>> _vertexEdge = new();
 
@@ -34,8 +37,8 @@ namespace NefAndFriends.LevelDesigner
         public void TakeSnapShot(string reason)
         {
             var sb = new System.Text.StringBuilder();
-            sb.AppendLine($"Vertices: {string.Join(",", from e in Vertices select $"[{e.Index}]{e.Name}")}");
-            sb.AppendLine($"Edges: {string.Join(",", from e in Edges select $"[{e.Index}]{e.From.Name}-{e.To.Name}")}");
+            sb.AppendLine($"Vertices: {string.Join(",", from e in vertices select $"[{e.Index}]{e.Name}")}");
+            sb.AppendLine($"Edges: {string.Join(",", from e in edges select $"[{e.Index}]{e.@from.Name}-{e.to.Name}")}");
             sb.Append("_vertexVertex:");
             for (var i = 0; i < _vertexVertex.Count; i++)
             {
@@ -164,13 +167,13 @@ namespace NefAndFriends.LevelDesigner
 
         private Vertex FindVertex(string name)
         {
-            return Vertices.FirstOrDefault(vertex => vertex.Name == name);
+            return vertices.FirstOrDefault(vertex => vertex.Name == name);
         }
 
         public HashSet<string> GetVertexNames()
         {
             var set = new HashSet<string>();
-            foreach (var vertex in Vertices)
+            foreach (var vertex in vertices)
             {
                 set.Add(vertex.Name);
             }
@@ -196,9 +199,9 @@ namespace NefAndFriends.LevelDesigner
         {
             var vertex = new Vertex(name, weight, this)
             {
-                Index = Vertices.Count
+                Index = vertices.Count
             };
-            Vertices.Add(vertex);
+            vertices.Add(vertex);
             _vertexVertex.Add(new UnorderedList<Vertex>());
             _vertexEdge.Add(new UnorderedList<Edge>());
 
@@ -226,17 +229,17 @@ namespace NefAndFriends.LevelDesigner
         public Vertex RemoveVertex(int index)
         {
             // TakeSnapShot($"Will RemoveVertex {index}");
-            var edges = _vertexEdge[index];
-            for (var i = edges.Count - 1; i >= 0; i--)
+            var edgesToRemove = _vertexEdge[index];
+            for (var i = edgesToRemove.Count - 1; i >= 0; i--)
             {
-                RemoveEdge(edges[i]);
+                RemoveEdge(edgesToRemove[i]);
             }
 
-            var vertex = Vertices[index];
-            Vertices.RemoveAt(index);
-            if (index < Vertices.Count)
+            var vertex = vertices[index];
+            vertices.RemoveAt(index);
+            if (index < vertices.Count)
             {
-                Vertices[index].Index = index;
+                vertices[index].Index = index;
             }
 
             _vertexVertex.RemoveAt(index);
@@ -272,9 +275,9 @@ namespace NefAndFriends.LevelDesigner
         {
             var edge = new Edge(from, to, type, this)
             {
-                Index = Edges.Count
+                Index = edges.Count
             };
-            Edges.Add(edge);
+            edges.Add(edge);
             _vertexVertex[from.Index].Add(to);
             _vertexEdge[from.Index].Add(edge);
             if (from != to)
@@ -291,7 +294,7 @@ namespace NefAndFriends.LevelDesigner
 
         public Edge FindEdge(string from, string to)
         {
-            return Edges.FirstOrDefault(e => e.From.Name == from && e.To.Name == to);
+            return edges.FirstOrDefault(e => e.from.Name == from && e.to.Name == to);
         }
 
         public Edge FindOrAddEdge(string from, string to, EdgeType type = EdgeType.Undirected)
@@ -301,18 +304,18 @@ namespace NefAndFriends.LevelDesigner
 
         public Edge RemoveEdge(int index)
         {
-            var edge = Edges[index];
-            Edges.RemoveAt(index);
-            if (index < Edges.Count)
+            var edge = edges[index];
+            edges.RemoveAt(index);
+            if (index < edges.Count)
             {
-                Edges[index].Index = index;
+                edges[index].Index = index;
             }
 
-            _vertexVertex[edge.From.Index].Remove(edge.To);
-            _vertexVertex[edge.To.Index].Remove(edge.From);
+            _vertexVertex[edge.from.Index].Remove(edge.to);
+            _vertexVertex[edge.to.Index].Remove(edge.from);
 
-            _vertexEdge[edge.From.Index].Remove(edge);
-            _vertexEdge[edge.To.Index].Remove(edge);
+            _vertexEdge[edge.from.Index].Remove(edge);
+            _vertexEdge[edge.to.Index].Remove(edge);
             // TakeSnapShot($"RemoveEdge {index}");
 
             Dirty = true;
@@ -330,16 +333,16 @@ namespace NefAndFriends.LevelDesigner
         {
             get
             {
-                var visited = new bool[Vertices.Count];
+                var visited = new bool[vertices.Count];
 
                 // Mark all nodes as unvisited.
-                for (var i = 0; i < Vertices.Count; i++)
+                for (var i = 0; i < vertices.Count; i++)
                 {
                     visited[i] = false;
                 }
 
                 var compNum = 0; // For counting connected components.
-                for (var v = 0; v < Vertices.Count; v++)
+                for (var v = 0; v < vertices.Count; v++)
                 {
                     // If v is not yet visited, it’s the start of a newly
                     // discovered connected component containing v.
@@ -380,9 +383,9 @@ namespace NefAndFriends.LevelDesigner
         {
             get
             {
-                for (var n = 1; n < Vertices.Count; n++)
+                for (var n = 1; n < vertices.Count; n++)
                 {
-                    var combs = MathUtils.GetCombinations(Vertices, n);
+                    var combs = MathUtils.GetCombinations(vertices, n);
                     for (var i = 0; i < combs.Count; i++)
                     {
                         var comb = combs[i];
@@ -399,13 +402,13 @@ namespace NefAndFriends.LevelDesigner
                     }
                 }
 
-                return Vertices.Count;
+                return vertices.Count;
             }
         }
 
         public float CalculateNthOrderCheeger(int n)
         {
-            var combs = MathUtils.GetCombinations(Vertices, n);
+            var combs = MathUtils.GetCombinations(vertices, n);
             var count = 0;
             for (var i = 0; i < combs.Count; i++)
             {
@@ -437,14 +440,14 @@ namespace NefAndFriends.LevelDesigner
                 bottom += inv;
             }
 
-            for (var i = 0; i < Vertices.Count; i++)
+            for (var i = 0; i < vertices.Count; i++)
             {
-                Vertices[i].Index = i;
+                vertices[i].Index = i;
             }
 
-            for (var i = 0; i < Edges.Count; i++)
+            for (var i = 0; i < edges.Count; i++)
             {
-                Edges[i].Index = i;
+                edges[i].Index = i;
             }
 
             Debug.Log($"==== PERF {DateTimeOffset.Now.ToUnixTimeMilliseconds() - dt} ms ====");
@@ -453,24 +456,24 @@ namespace NefAndFriends.LevelDesigner
 
         public override string ToString()
         {
-            return $"{string.Join("\n", from edge in Edges select edge.ToString())}\n\n{string.Join("\n", from vertex in Vertices select vertex.ToString())}";
+            return $"{string.Join("\n", from edge in edges select edge.ToString())}\n\n{string.Join("\n", from vertex in vertices select vertex.ToString())}";
         }
 
         private Graph ShallowClone()
         {
             var g = new Graph
             {
-                Vertices = Vertices.Clone()
+                vertices = vertices.Clone()
             };
-            for (var i = 0; i < Vertices.Count; i++)
+            for (var i = 0; i < vertices.Count; i++)
             {
-                g.Vertices[i].Index = i;
+                g.vertices[i].Index = i;
             }
 
-            g.Edges = Edges.Clone();
-            for (var i = 0; i < Edges.Count; i++)
+            g.edges = edges.Clone();
+            for (var i = 0; i < edges.Count; i++)
             {
-                g.Edges[i].Index = i;
+                g.edges[i].Index = i;
             }
 
             g._vertexVertex = new UnorderedList<UnorderedList<Vertex>>(_vertexVertex.Count);
@@ -486,6 +489,37 @@ namespace NefAndFriends.LevelDesigner
             }
 
             return g;
+        }
+
+        private void SetChildRefs()
+        {
+            if (vertices != null)
+            {
+                foreach (var vertex in vertices)
+                {
+                    vertex.SetParent(this);
+                }
+            }
+
+            if (edges != null)
+            {
+                foreach (var edge in edges)
+                {
+                    edge.SetParent(this);
+                }
+            }
+        }
+
+        [UsedImplicitly]
+        private Vertex ListAddNewVertex()
+        {
+            return AddVertex();
+        }
+
+        [UsedImplicitly]
+        private Edge ListAddNewEdge()
+        {
+            return AddEdge(null, null);
         }
     }
 }

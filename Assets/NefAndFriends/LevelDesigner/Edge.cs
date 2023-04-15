@@ -1,31 +1,44 @@
-﻿namespace NefAndFriends.LevelDesigner
-{
-    public enum EdgeType
-    {
-        Undirected,
-        Directed,
-        ShortCut,
-        Mechanism,
-    }
+﻿using System;
+// using System.Collections;
+using UnityEngine;
 
+namespace NefAndFriends.LevelDesigner
+{
+    [Serializable]
     public class Edge
     {
-        public Vertex From;
-        public Vertex To;
+        [SerializeReference]
+        public Vertex from;
 
-        private EdgeType _type;
+        [SerializeReference]
+        public Vertex to;
+
+        // private IEnumerable SelectVertex()
+        // {
+        //     var list = new ValueDropdownList<Vertex>();
+        //     foreach (var entry in _graph.vertices)
+        //     {
+        //         list.Add(entry.Name, entry);
+        //     }
+        //
+        //     return list;
+        // }
+
+        [SerializeField]
+        private EdgeType type;
 
         public EdgeType Type
         {
-            get => _type;
+            get => type;
             set
             {
-                _type = value;
+                type = value;
                 _graph.Dirty = true;
             }
         }
 
-        private readonly Graph _graph;
+        [NonSerialized]
+        private Graph _graph;
 
         public static string GetNameID(string from, string to, EdgeType type)
         {
@@ -39,16 +52,16 @@
             };
         }
 
-        public string Name => GetNameID(From.Name, To.Name, Type);
+        public string Name => GetNameID(from.Name, to.Name, Type);
 
-        public string NodesName => $"{From.Name}-{To.Name}";
+        public string NodesName => $"{from.Name}-{to.Name}";
 
         public string OrderedNodesName
         {
             get
             {
-                var fromName = From.Name;
-                var toName = To.Name;
+                var fromName = from.Name;
+                var toName = to.Name;
                 return string.CompareOrdinal(fromName, toName) <= 0 ? $"{fromName}-{toName}" : $"{toName}-{fromName}";
             }
         }
@@ -58,8 +71,8 @@
         public Edge(Vertex from, Vertex to, EdgeType type, Graph graph)
         {
             _graph = graph;
-            From = from;
-            To = to;
+            this.from = from;
+            this.to = to;
             Type = type;
         }
 
@@ -70,8 +83,13 @@
 
         public Edge Clone()
         {
-            var v = new Edge(From, To, Type, _graph);
+            var v = new Edge(from, to, Type, _graph);
             return v;
+        }
+
+        public void SetParent(Graph graph)
+        {
+            _graph = graph;
         }
     }
 }

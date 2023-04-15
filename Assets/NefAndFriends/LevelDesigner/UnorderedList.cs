@@ -1,16 +1,19 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using UnityEngine;
 
 namespace NefAndFriends.LevelDesigner
 {
+    [Serializable]
     public class UnorderedList<T> : IList<T>
     {
-        private T[] _array;
+        [SerializeField, SerializeReference]
+        private T[] array;
 
         public UnorderedList(int capacity = 0)
         {
-            _array = new T[capacity];
+            array = new T[capacity];
             Count = 0;
         }
 
@@ -18,7 +21,7 @@ namespace NefAndFriends.LevelDesigner
         {
             for (var i = 0; i < Count; i++)
             {
-                yield return _array[i];
+                yield return array[i];
             }
         }
 
@@ -30,12 +33,12 @@ namespace NefAndFriends.LevelDesigner
         public void Add(T item)
         {
             var i = Count++;
-            if (_array.Length < Count)
+            if (array.Length < Count)
             {
-                Array.Resize(ref _array, Count);
+                Array.Resize(ref array, Count);
             }
 
-            _array[i] = item;
+            array[i] = item;
         }
 
         public void Clear()
@@ -48,7 +51,7 @@ namespace NefAndFriends.LevelDesigner
             throw new NotImplementedException();
         }
 
-        public void CopyTo(T[] array, int arrayIndex)
+        public void CopyTo(T[] targetArray, int arrayIndex)
         {
             throw new NotImplementedException();
         }
@@ -65,7 +68,14 @@ namespace NefAndFriends.LevelDesigner
             return true;
         }
 
-        public int Count { get; private set; }
+        [SerializeField]
+        private int count;
+
+        public int Count
+        {
+            get => count;
+            private set => count = value;
+        }
 
         public bool IsReadOnly => false;
 
@@ -73,7 +83,7 @@ namespace NefAndFriends.LevelDesigner
         {
             for (var i = 0; i < Count; i++)
             {
-                if (_array[i].Equals(item))
+                if (array[i].Equals(item))
                 {
                     return i;
                 }
@@ -89,19 +99,19 @@ namespace NefAndFriends.LevelDesigner
 
         public void RemoveAt(int index)
         {
-            _array[index] = _array[--Count];
+            array[index] = array[--Count];
         }
 
         public T this[int index]
         {
-            get => _array[index];
-            set => _array[index] = value;
+            get => array[index];
+            set => array[index] = value;
         }
 
         public UnorderedList<T> Clone()
         {
             var @new = new UnorderedList<T>(Count);
-            Array.Copy(_array, @new._array, Count);
+            Array.Copy(array, @new.array, Count);
             @new.Count = Count;
             return @new;
         }

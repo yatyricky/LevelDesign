@@ -3,64 +3,69 @@ using UnityEngine;
 
 namespace NefAndFriends.LevelDesigner
 {
+    [Serializable]
     public class Vertex
     {
-        private string _name;
+        [SerializeField]
+        private string name;
 
         public string Name
         {
-            get => _name;
+            get => name;
             set
             {
                 var currentNames = _graph.GetVertexNames();
-                currentNames.Remove(_name);
+                currentNames.Remove(name);
                 if (currentNames.Contains(value))
                 {
                     return;
                 }
 
-                _name = value;
+                name = value;
             }
         }
 
-        public float Weight;
+        public float weight;
 
-        private VertexType _type;
+        [SerializeField]
+        private VertexType type;
 
         public VertexType Type
         {
-            get => _type;
+            get => type;
             set
             {
-                _type = value;
+                type = value;
                 _graph.Dirty = true;
             }
         }
 
-        private Vector3 _position;
+        [SerializeField]
+        private Vector3 position;
 
         /// <summary>
         /// For drawing
         /// </summary>
         public Vector3 Position
         {
-            get => _position;
+            get => position;
             set
             {
-                _position = value;
+                position = value;
                 _graph.Dirty = true;
             }
         }
 
         internal int Index;
 
+        [NonSerialized]
         private Graph _graph;
 
         public Vertex(string name, float weight, Graph graph)
         {
             _graph = graph;
             Name = name;
-            Weight = weight;
+            this.weight = weight;
         }
 
         private string NodeTypeToString()
@@ -77,17 +82,22 @@ namespace NefAndFriends.LevelDesigner
 
         public override string ToString()
         {
-            return $"#{Name} pos:({Position.x:0.00},{Position.y:0.00}) type:{NodeTypeToString()} weight:{Weight}";
+            return $"#{Name} pos:({Position.x:0.00},{Position.y:0.00}) type:{NodeTypeToString()} weight:{weight}";
         }
 
         public Vertex Clone()
         {
-            var v = new Vertex(Name, Weight, _graph)
+            var v = new Vertex(Name, weight, _graph)
             {
-                _position = _position,
-                _type = _type
+                position = position,
+                type = type
             };
             return v;
+        }
+
+        public void SetParent(Graph graph)
+        {
+            _graph = graph;
         }
     }
 }

@@ -150,7 +150,7 @@ namespace NefAndFriends.LevelDesignerEditor
             }
 
             var edge = _editingConnection.Edge;
-            (edge.From, edge.To) = (edge.To, edge.From);
+            (edge.from, edge.to) = (edge.to, edge.from);
         }
 
         private void CalculateStability()
@@ -521,9 +521,9 @@ namespace NefAndFriends.LevelDesignerEditor
         {
             // noes
             var currNodes = new HashSet<string>(_nodes.Keys);
-            for (var i = 0; i < _graphData.Vertices.Count; i++)
+            for (var i = 0; i < _graphData.vertices.Count; i++)
             {
-                var vertex = _graphData.Vertices[i];
+                var vertex = _graphData.vertices[i];
                 Node node;
                 if (currNodes.Contains(vertex.Name))
                 {
@@ -550,7 +550,7 @@ namespace NefAndFriends.LevelDesignerEditor
             var currConnections = new HashSet<string>(_connections.Keys);
             var sameWayCount = new Dictionary<string, int>();
             var nodeEdgesDir = new Dictionary<string, Vector2>();
-            foreach (var edge in _graphData.Edges)
+            foreach (var edge in _graphData.edges)
             {
                 var connectionName = edge.NodesName;
                 if (currConnections.Contains(connectionName))
@@ -574,11 +574,11 @@ namespace NefAndFriends.LevelDesignerEditor
                 }
 
                 // vertex edges
-                if (edge.From != edge.To)
+                if (edge.from != edge.to)
                 {
-                    var fromName = edge.From.Name;
-                    var toName = edge.To.Name;
-                    var dir = (edge.To.Position - edge.From.Position).normalized;
+                    var fromName = edge.from.Name;
+                    var toName = edge.to.Name;
+                    var dir = (edge.to.Position - edge.from.Position).normalized;
                     if (!nodeEdgesDir.ContainsKey(fromName))
                     {
                         nodeEdgesDir.Add(fromName, new Vector2());
@@ -594,7 +594,7 @@ namespace NefAndFriends.LevelDesignerEditor
                 }
                 else
                 {
-                    var toName = edge.To.Name;
+                    var toName = edge.to.Name;
                     if (!nodeEdgesDir.ContainsKey(toName))
                     {
                         nodeEdgesDir.Add(toName, new Vector2());
@@ -615,7 +615,7 @@ namespace NefAndFriends.LevelDesignerEditor
                 }
             }
 
-            foreach (var edge in _graphData.Edges)
+            foreach (var edge in _graphData.edges)
             {
                 var connectionName = edge.NodesName;
                 var sameKey = edge.OrderedNodesName;
@@ -623,9 +623,9 @@ namespace NefAndFriends.LevelDesignerEditor
                 sameWayCount[sameKey]--;
                 var connection = _connections[connectionName];
                 connection.SetCurve(count);
-                if (edge.From == edge.To)
+                if (edge.from == edge.to)
                 {
-                    connection.SetAngle(-nodeEdgesDir[edge.From.Name]);
+                    connection.SetAngle(-nodeEdgesDir[edge.from.Name]);
                 }
 
                 connection.OnGUI();
@@ -719,8 +719,8 @@ namespace NefAndFriends.LevelDesignerEditor
         // ReSharper disable once UnusedMethodReturnValue.Local
         private Connection AddConnection(Edge edge)
         {
-            var fromNodeName = edge.From.Name;
-            var toNodeName = edge.To.Name;
+            var fromNodeName = edge.from.Name;
+            var toNodeName = edge.to.Name;
             var connectionName = edge.NodesName;
             var source = _nodes[fromNodeName];
             var target = _nodes[toNodeName];

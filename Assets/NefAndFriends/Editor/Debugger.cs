@@ -1,5 +1,4 @@
 ﻿using System.Reflection;
-using Sirenix.OdinInspector;
 using UnityEditor;
 using UnityEngine;
 
@@ -28,7 +27,6 @@ namespace NefAndFriends.LevelDesignerEditor
         
         public int actionType;
 
-        [OnInspectorGUI]
         private void ReadActionType()
         {
             if (window == null)
