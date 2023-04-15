@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using JetBrains.Annotations;
 using NefAndFriends.LevelDesigner;
 using UnityEditor;
 using UnityEditor.UIElements;
@@ -590,8 +589,8 @@ namespace NefAndFriends.LevelDesignerEditor
                         nodeEdgesDir.Add(toName, new Vector2());
                     }
 
-                    nodeEdgesDir[fromName] += dir;
-                    nodeEdgesDir[toName] -= dir;
+                    nodeEdgesDir[fromName] += (Vector2)dir;
+                    nodeEdgesDir[toName] -= (Vector2)dir;
                 }
                 else
                 {
@@ -703,7 +702,7 @@ namespace NefAndFriends.LevelDesignerEditor
             return node;
         }
 
-        [UsedImplicitly]
+        // ReSharper disable once UnusedMethodReturnValue.Local
         private Node RemoveNode(string nodeName)
         {
             if (_nodes.TryGetValue(nodeName, out var node))
@@ -717,7 +716,7 @@ namespace NefAndFriends.LevelDesignerEditor
             return null;
         }
 
-        [UsedImplicitly]
+        // ReSharper disable once UnusedMethodReturnValue.Local
         private Connection AddConnection(Edge edge)
         {
             var fromNodeName = edge.From.Name;
@@ -730,7 +729,7 @@ namespace NefAndFriends.LevelDesignerEditor
             return connection;
         }
 
-        [UsedImplicitly]
+        // ReSharper disable once UnusedMethodReturnValue.Local
         private Connection RemoveConnection(string connectionName)
         {
             if (_connections.TryGetValue(connectionName, out var connection))

@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 using UnityEngine;
-using Debug = UnityEngine.Debug;
 
 namespace NefAndFriends.LevelDesigner
 {
@@ -120,7 +119,7 @@ namespace NefAndFriends.LevelDesigner
 
                     if (!string.IsNullOrEmpty(posX))
                     {
-                        vertex.Position = new Vector2(float.Parse(posX), float.Parse(posY));
+                        vertex.Position = new Vector3(float.Parse(posX), float.Parse(posY));
                     }
 
                     var vType = v.Groups["type"].Value;

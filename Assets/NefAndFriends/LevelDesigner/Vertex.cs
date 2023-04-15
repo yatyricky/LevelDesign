@@ -3,14 +3,6 @@ using UnityEngine;
 
 namespace NefAndFriends.LevelDesigner
 {
-    public enum VertexType
-    {
-        Normal,
-        Start,
-        Save,
-        Boss
-    }
-
     public class Vertex
     {
         private string _name;
@@ -45,12 +37,12 @@ namespace NefAndFriends.LevelDesigner
             }
         }
 
-        private Vector2 _position;
+        private Vector3 _position;
 
         /// <summary>
         /// For drawing
         /// </summary>
-        public Vector2 Position
+        public Vector3 Position
         {
             get => _position;
             set
@@ -62,7 +54,7 @@ namespace NefAndFriends.LevelDesigner
 
         internal int Index;
 
-        private readonly Graph _graph;
+        private Graph _graph;
 
         public Vertex(string name, float weight, Graph graph)
         {
@@ -73,19 +65,14 @@ namespace NefAndFriends.LevelDesigner
 
         private string NodeTypeToString()
         {
-            switch (Type)
+            return Type switch
             {
-                case VertexType.Normal:
-                    return "poi";
-                case VertexType.Start:
-                    return "start";
-                case VertexType.Save:
-                    return "save";
-                case VertexType.Boss:
-                    return "boss";
-                default:
-                    throw new ArgumentOutOfRangeException();
-            }
+                VertexType.Normal => "poi",
+                VertexType.Start => "start",
+                VertexType.Save => "save",
+                VertexType.Boss => "boss",
+                _ => throw new ArgumentOutOfRangeException()
+            };
         }
 
         public override string ToString()
