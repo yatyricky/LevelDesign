@@ -184,99 +184,99 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   graph:
     vertices:
-      array:
-      - rid: 7932746945041531074
-      - rid: 7932746945041531075
-      - rid: 7932746945041531076
-      - rid: 7932746945041531077
+      arrayData:
+      - rid: 7932746965449179136
+      - rid: 7932746965449179137
+      - rid: 7932746965449179138
+      - rid: 7932746965449179139
       count: 4
     edges:
-      array:
-      - rid: 7932746945041531078
-      - rid: 7932746945041531079
-      - rid: 7932746945041531080
-      - rid: 7932746945041531081
-      - rid: 7932746945041531082
-      - rid: 7932746945041531083
+      arrayData:
+      - rid: 7932746965449179140
+      - rid: 7932746965449179141
+      - rid: 7932746965449179142
+      - rid: 7932746965449179143
+      - rid: 7932746965449179144
+      - rid: 7932746965449179145
       count: 6
   references:
     version: 2
     RefIds:
-    - rid: 7932746945041531074
+    - rid: 7932746965449179136
       type: {class: Vertex, ns: NefAndFriends.LevelDesigner, asm: Assembly-CSharp}
       data:
         name: A
         weight: 1
         type: 0
         position: {x: 0.14, y: 1.06, z: 0}
-    - rid: 7932746945041531075
+    - rid: 7932746965449179137
       type: {class: Vertex, ns: NefAndFriends.LevelDesigner, asm: Assembly-CSharp}
       data:
         name: B
         weight: 1
         type: 0
         position: {x: 3.84, y: -0.06, z: 0}
-    - rid: 7932746945041531076
+    - rid: 7932746965449179138
       type: {class: Vertex, ns: NefAndFriends.LevelDesigner, asm: Assembly-CSharp}
       data:
         name: C
         weight: 1
         type: 1
         position: {x: 2.28, y: -3.16, z: 0}
-    - rid: 7932746945041531077
+    - rid: 7932746965449179139
       type: {class: Vertex, ns: NefAndFriends.LevelDesigner, asm: Assembly-CSharp}
       data:
         name: D
         weight: 1
         type: 0
         position: {x: -0.64, y: -1.86, z: 0}
-    - rid: 7932746945041531078
+    - rid: 7932746965449179140
       type: {class: Edge, ns: NefAndFriends.LevelDesigner, asm: Assembly-CSharp}
       data:
         from:
-          rid: 7932746945041531074
+          rid: 7932746965449179136
         to:
-          rid: 7932746945041531075
+          rid: 7932746965449179137
         type: 1
-    - rid: 7932746945041531079
+    - rid: 7932746965449179141
       type: {class: Edge, ns: NefAndFriends.LevelDesigner, asm: Assembly-CSharp}
       data:
         from:
-          rid: 7932746945041531075
+          rid: 7932746965449179137
         to:
-          rid: 7932746945041531076
+          rid: 7932746965449179138
         type: 0
-    - rid: 7932746945041531080
+    - rid: 7932746965449179142
       type: {class: Edge, ns: NefAndFriends.LevelDesigner, asm: Assembly-CSharp}
       data:
         from:
-          rid: 7932746945041531076
+          rid: 7932746965449179138
         to:
-          rid: 7932746945041531077
+          rid: 7932746965449179139
         type: 3
-    - rid: 7932746945041531081
+    - rid: 7932746965449179143
       type: {class: Edge, ns: NefAndFriends.LevelDesigner, asm: Assembly-CSharp}
       data:
         from:
-          rid: 7932746945041531077
+          rid: 7932746965449179139
         to:
-          rid: 7932746945041531077
+          rid: 7932746965449179139
         type: 0
-    - rid: 7932746945041531082
+    - rid: 7932746965449179144
       type: {class: Edge, ns: NefAndFriends.LevelDesigner, asm: Assembly-CSharp}
       data:
         from:
-          rid: 7932746945041531076
+          rid: 7932746965449179138
         to:
-          rid: 7932746945041531076
+          rid: 7932746965449179138
         type: 2
-    - rid: 7932746945041531083
+    - rid: 7932746965449179145
       type: {class: Edge, ns: NefAndFriends.LevelDesigner, asm: Assembly-CSharp}
       data:
         from:
-          rid: 7932746945041531074
+          rid: 7932746965449179136
         to:
-          rid: 7932746945041531074
+          rid: 7932746965449179136
         type: 3
 --- !u!1 &705507993
 GameObject:

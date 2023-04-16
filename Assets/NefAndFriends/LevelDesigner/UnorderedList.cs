@@ -6,22 +6,36 @@ using UnityEngine;
 namespace NefAndFriends.LevelDesigner
 {
     [Serializable]
-    public class UnorderedList<T> : IList<T>
+    public class UnorderedList<T> : IList<T>, IList
     {
         [SerializeField, SerializeReference]
-        private T[] array;
+        private T[] arrayData;
+
+        [SerializeField]
+        private int count;
+
+        public bool IsSynchronized { get; }
+        public object SyncRoot { get; }
+
+        public bool IsFixedSize { get; }
+
+        public bool IsReadOnly => false;
 
         public UnorderedList(int capacity = 0)
         {
-            array = new T[capacity];
+            arrayData = new T[capacity];
             Count = 0;
+
+            IsSynchronized = true;
+            SyncRoot = typeof(UnorderedList<T>);
+            IsFixedSize = false;
         }
 
         public IEnumerator<T> GetEnumerator()
         {
             for (var i = 0; i < Count; i++)
             {
-                yield return array[i];
+                yield return arrayData[i];
             }
         }
 
@@ -33,12 +47,18 @@ namespace NefAndFriends.LevelDesigner
         public void Add(T item)
         {
             var i = Count++;
-            if (array.Length < Count)
+            if (arrayData.Length < Count)
             {
-                Array.Resize(ref array, Count);
+                Array.Resize(ref arrayData, Count);
             }
 
-            array[i] = item;
+            arrayData[i] = item;
+        }
+
+        public int Add(object value)
+        {
+            Add((T)value);
+            return Count - 1;
         }
 
         public void Clear()
@@ -46,14 +66,37 @@ namespace NefAndFriends.LevelDesigner
             Count = 0;
         }
 
-        public bool Contains(T item)
+        public bool Contains(object value)
         {
-            throw new NotImplementedException();
+            return Array.IndexOf(arrayData, value) > -1;
         }
 
-        public void CopyTo(T[] targetArray, int arrayIndex)
+        public int IndexOf(object value)
         {
-            throw new NotImplementedException();
+            return Array.IndexOf(arrayData, value);
+        }
+
+        public void Insert(int index, object value)
+        {
+            Add(value);
+        }
+
+        public void Remove(object value)
+        {
+            Remove((T)value);
+        }
+
+        public bool Contains(T item)
+        {
+            return Array.IndexOf(arrayData, item) > -1;
+        }
+
+        public void CopyTo(T[] array, int arrayIndex)
+        {
+            for (var i = arrayIndex; i < array.Length; i++)
+            {
+                array[i] = this[i];
+            }
         }
 
         public bool Remove(T item)
@@ -68,8 +111,13 @@ namespace NefAndFriends.LevelDesigner
             return true;
         }
 
-        [SerializeField]
-        private int count;
+        public void CopyTo(Array array, int index)
+        {
+            for (var i = index; i < array.Length; i++)
+            {
+                array.SetValue(this[i], i);
+            }
+        }
 
         public int Count
         {
@@ -77,13 +125,17 @@ namespace NefAndFriends.LevelDesigner
             private set => count = value;
         }
 
-        public bool IsReadOnly => false;
+        object IList.this[int index]
+        {
+            get => this[index];
+            set => this[index] = (T)value;
+        }
 
         public int IndexOf(T item)
         {
             for (var i = 0; i < Count; i++)
             {
-                if (array[i].Equals(item))
+                if (arrayData[i].Equals(item))
                 {
                     return i;
                 }
@@ -99,19 +151,19 @@ namespace NefAndFriends.LevelDesigner
 
         public void RemoveAt(int index)
         {
-            array[index] = array[--Count];
+            arrayData[index] = arrayData[--Count];
         }
 
         public T this[int index]
         {
-            get => array[index];
-            set => array[index] = value;
+            get => arrayData[index];
+            set => arrayData[index] = value;
         }
 
         public UnorderedList<T> Clone()
         {
             var @new = new UnorderedList<T>(Count);
-            Array.Copy(array, @new.array, Count);
+            Array.Copy(arrayData, @new.arrayData, Count);
             @new.Count = Count;
             return @new;
         }

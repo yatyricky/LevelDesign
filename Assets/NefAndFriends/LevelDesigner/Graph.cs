@@ -8,7 +8,7 @@ using UnityEngine;
 namespace NefAndFriends.LevelDesigner
 {
     [Serializable]
-    public class Graph
+    public class Graph : ISerializationCallbackReceiver
     {
         private static readonly Regex EdgeDefine = new(@"(?<from>\w+)[ \t]*(?<conn>[->\*]{2})[ \t]*(?<to>\w+)[ \t]*(#[ \t]*((angle[ \t]*:[ \t]*(?<angle>[\d-\.]+))|[ \t]|(strength[ \t]*:[ \t]*(?<strength>[\d-\.]+)))*)?", RegexOptions.Compiled);
         private static readonly Regex VertexDefine = new(@"#[ \t]*(?<name>\w+)[ \t]+((pos[ \t]*:[ \t]*\([ \t]*(?<posX>[\d\.-]+)[ \t]*,[ \t]*(?<posY>[\d\.-]+)[ \t]*\))|[ \t]|(type[ \t]*:[ \t]*(?<type>\w+)))*", RegexOptions.Compiled);
@@ -34,7 +34,7 @@ namespace NefAndFriends.LevelDesigner
             }
         }
 
-        public void TakeSnapShot(string reason)
+        public string TakeSnapShot()
         {
             var sb = new System.Text.StringBuilder();
             sb.AppendLine($"Vertices: {string.Join(",", from e in vertices select $"[{e.Index}]{e.Name}")}");
@@ -42,18 +42,17 @@ namespace NefAndFriends.LevelDesigner
             sb.Append("_vertexVertex:");
             for (var i = 0; i < _vertexVertex.Count; i++)
             {
-                sb.Append($"[{i}]{string.Join(",", from v in _vertexVertex[i] select v.Index)} ");
+                sb.Append(i < _vertexVertex.Count ? $"[{i}]{string.Join(",", from v in _vertexVertex[i] select v.Index)} " : $"[{i}]NULL ");
             }
 
             sb.AppendLine();
             sb.Append("_vertexEdge:");
             for (var i = 0; i < _vertexEdge.Count; i++)
             {
-                sb.Append($"[{i}]{string.Join(",", from v in _vertexEdge[i] select v.Index)} ");
+                sb.Append(i < _vertexEdge.Count ? $"[{i}]{string.Join(",", from v in _vertexEdge[i] select v.Index)} " : $"[{i}]NULL ");
             }
 
-            sb.AppendLine();
-            Debug.Log($"{reason}\n{sb}");
+            return sb.ToString();
         }
 
         public string Name { get; set; }
@@ -520,6 +519,54 @@ namespace NefAndFriends.LevelDesigner
         private Edge ListAddNewEdge()
         {
             return AddEdge(null, null);
+        }
+
+        private void InitNonSerializedData()
+        {
+            for (var i = 0; i < vertices.Count; i++)
+            {
+                vertices[i].Index = i;
+            }
+
+            for (var i = 0; i < edges.Count; i++)
+            {
+                edges[i].Index = i;
+            }
+
+            _vertexVertex = new UnorderedList<UnorderedList<Vertex>>();
+            for (var i = 0; i < vertices.Count; i++)
+            {
+                _vertexVertex.Add(new UnorderedList<Vertex>());
+            }
+
+            _vertexEdge = new UnorderedList<UnorderedList<Edge>>();
+            for (var i = 0; i < vertices.Count; i++)
+            {
+                _vertexEdge.Add(new UnorderedList<Edge>());
+            }
+
+            foreach (var edge in edges)
+            {
+                var from = edge.from;
+                var to = edge.to;
+                _vertexVertex[from.Index].Add(to);
+                _vertexEdge[from.Index].Add(edge);
+                if (from != to)
+                {
+                    _vertexVertex[to.Index].Add(from);
+                    _vertexEdge[to.Index].Add(edge);
+                }
+            }
+        }
+
+        public void OnBeforeSerialize()
+        {
+            InitNonSerializedData();
+        }
+
+        public void OnAfterDeserialize()
+        {
+            InitNonSerializedData();
         }
     }
 }

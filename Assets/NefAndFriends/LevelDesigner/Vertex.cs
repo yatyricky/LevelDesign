@@ -14,6 +14,11 @@ namespace NefAndFriends.LevelDesigner
             get => name;
             set
             {
+                if (string.IsNullOrEmpty(value))
+                {
+                    return;
+                }
+
                 var currentNames = _graph.GetVertexNames();
                 currentNames.Remove(name);
                 if (currentNames.Contains(value))
