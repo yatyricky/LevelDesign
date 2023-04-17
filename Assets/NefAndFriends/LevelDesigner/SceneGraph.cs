@@ -45,17 +45,6 @@ namespace NefAndFriends.LevelDesigner
             return texture;
         }
 
-        private static int? _hotControl;
-
-        private static int HotControl
-        {
-            get
-            {
-                _hotControl ??= GUIUtility.GetControlID(0, FocusType.Passive);
-                return _hotControl.Value;
-            }
-        }
-
         private SceneGraph This => target as SceneGraph;
 
         private ReorderableList _verticesList;
@@ -130,45 +119,38 @@ namespace NefAndFriends.LevelDesigner
         private void OnSceneGUI()
         {
             var shift = Event.current.shift;
-            switch (Event.current.type)
+            if (Event.current.type == EventType.MouseDown)
             {
-                case EventType.MouseDown:
-                    var camera = SceneView.currentDrawingSceneView.camera;
-                    var position = camera.transform.position;
-                    var distanceFromCam = new Vector3(position.x, position.y, 0);
-                    var plane = new Plane(Vector3.forward, distanceFromCam);
-                    var ray = HandleUtility.GUIPointToWorldRay(Event.current.mousePosition);
-                    var worldPos = Vector3.zero;
-                    if (plane.Raycast(ray, out var enter))
+                var camera = SceneView.currentDrawingSceneView.camera;
+                var position = camera.transform.position;
+                var distanceFromCam = new Vector3(position.x, position.y, 0);
+                var plane = new Plane(Vector3.forward, distanceFromCam);
+                var ray = HandleUtility.GUIPointToWorldRay(Event.current.mousePosition);
+                var worldPos = Vector3.zero;
+                if (plane.Raycast(ray, out var enter))
+                {
+                    worldPos = ray.GetPoint(enter);
+                }
+
+                var nearest = (from e in This.graph.vertices select (dist: (e.Position - worldPos).sqrMagnitude, elem: e) into tuple orderby tuple.dist select tuple.elem).FirstOrDefault();
+                if (nearest != null)
+                {
+                    This.CurrentVertex = nearest;
+                }
+
+                if (Event.current.button == 1 && shift)
+                {
+                    var menu = new GenericMenu();
+                    menu.AddItem(new GUIContent("New Node"), false, CreateVertex, worldPos);
+
+                    if (This.CurrentVertex != null)
                     {
-                        worldPos = ray.GetPoint(enter);
+                        menu.AddItem(new GUIContent($"Delete {This.CurrentVertex.Name}"), false, DeleteVertex, This.CurrentVertex);
                     }
 
-                    var nearest = (from e in This.graph.vertices select (dist: (e.Position - worldPos).sqrMagnitude, elem: e) into tuple orderby tuple.dist select tuple.elem).FirstOrDefault();
-                    if (nearest != null)
-                    {
-                        This.CurrentVertex = nearest;
-                    }
-
-                    if (Event.current.button == 1 && shift)
-                    {
-                        var menu = new GenericMenu();
-                        menu.AddItem(new GUIContent("New Node"), false, CreateVertex, worldPos);
-
-                        if (This.CurrentVertex != null)
-                        {
-                            menu.AddItem(new GUIContent($"Delete {This.CurrentVertex.Name}"), false, DeleteVertex, This.CurrentVertex);
-                        }
-
-                        menu.ShowAsContext();
-                        Event.current.Use();
-                    }
-
-                    GUIUtility.hotControl = HotControl;
-                    break;
-                case EventType.MouseUp:
-                    GUIUtility.hotControl = 0;
-                    break;
+                    menu.ShowAsContext();
+                    Event.current.Use();
+                }
             }
 
             EditorGUI.BeginChangeCheck();
@@ -190,7 +172,6 @@ namespace NefAndFriends.LevelDesigner
                     vertex.Position = Handles.PositionHandle(vertex.Position, Quaternion.identity);
                 }
             }
-
 
             if (EditorGUI.EndChangeCheck())
             {
