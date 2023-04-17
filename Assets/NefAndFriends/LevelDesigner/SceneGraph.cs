@@ -3,10 +3,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using UnityEditor;
-using UnityEditor.Overlays;
 using UnityEditorInternal;
 using UnityEngine;
-using UnityEngine.UIElements;
 
 namespace NefAndFriends.LevelDesigner
 {
@@ -47,6 +45,17 @@ namespace NefAndFriends.LevelDesigner
             return texture;
         }
 
+        private static int? _hotControl;
+
+        private static int HotControl
+        {
+            get
+            {
+                _hotControl ??= GUIUtility.GetControlID(0, FocusType.Passive);
+                return _hotControl.Value;
+            }
+        }
+
         private SceneGraph This => target as SceneGraph;
 
         private ReorderableList _verticesList;
@@ -57,10 +66,16 @@ namespace NefAndFriends.LevelDesigner
             {
                 draggable = false,
                 multiSelect = true,
+                drawHeaderCallback = DrawVertexHeader,
                 drawElementCallback = DrawVertex,
                 onAddCallback = DrawAddVertex,
                 onRemoveCallback = DrawRemoveVertex
             };
+        }
+
+        private void DrawVertexHeader(Rect rect)
+        {
+            EditorGUI.LabelField(rect, "Vertices");
         }
 
         private void DrawVertex(Rect rect, int index, bool isActive, bool isFocused)
@@ -93,6 +108,14 @@ namespace NefAndFriends.LevelDesigner
 
             EditorGUI.BeginChangeCheck();
             _verticesList.DoLayoutList();
+
+            if (This.CurrentVertex != null)
+            {
+                EditorGUILayout.LabelField("Current Vertex");
+                var rect = EditorGUILayout.GetControlRect(false);
+                DrawVertex(rect, This.CurrentVertex.Index, false, false);
+            }
+
             if (EditorGUI.EndChangeCheck())
             {
                 EditorUtility.SetDirty(This);
@@ -107,10 +130,9 @@ namespace NefAndFriends.LevelDesigner
         private void OnSceneGUI()
         {
             var shift = Event.current.shift;
-            if (Event.current.button == 1)
+            switch (Event.current.type)
             {
-                if (Event.current.type == EventType.MouseDown && shift)
-                {
+                case EventType.MouseDown:
                     var camera = SceneView.currentDrawingSceneView.camera;
                     var position = camera.transform.position;
                     var distanceFromCam = new Vector3(position.x, position.y, 0);
@@ -122,21 +144,31 @@ namespace NefAndFriends.LevelDesigner
                         worldPos = ray.GetPoint(enter);
                     }
 
-                    var menu = new GenericMenu();
-                    menu.AddItem(new GUIContent("New Node"), false, CreateVertex, worldPos);
-
                     var nearest = (from e in This.graph.vertices select (dist: (e.Position - worldPos).sqrMagnitude, elem: e) into tuple orderby tuple.dist select tuple.elem).FirstOrDefault();
                     if (nearest != null)
                     {
-                        menu.AddItem(new GUIContent($"Delete {nearest.Name}"), false, DeleteVertex, nearest);
-
                         This.CurrentVertex = nearest;
                     }
 
-                    menu.ShowAsContext();
+                    if (Event.current.button == 1 && shift)
+                    {
+                        var menu = new GenericMenu();
+                        menu.AddItem(new GUIContent("New Node"), false, CreateVertex, worldPos);
 
-                    Event.current.Use();
-                }
+                        if (This.CurrentVertex != null)
+                        {
+                            menu.AddItem(new GUIContent($"Delete {This.CurrentVertex.Name}"), false, DeleteVertex, This.CurrentVertex);
+                        }
+
+                        menu.ShowAsContext();
+                        Event.current.Use();
+                    }
+
+                    GUIUtility.hotControl = HotControl;
+                    break;
+                case EventType.MouseUp:
+                    GUIUtility.hotControl = 0;
+                    break;
             }
 
             EditorGUI.BeginChangeCheck();
@@ -177,73 +209,6 @@ namespace NefAndFriends.LevelDesigner
         {
             This.graph.RemoveVertex((Vertex)vertex);
             EditorUtility.SetDirty(This);
-        }
-    }
-
-    [Overlay(typeof(SceneView), DisplayName)]
-    public class VertexEditorOverlay : ToolbarOverlay, ITransientOverlay
-    {
-        private const string DisplayName = "Level Designer";
-
-        // private Vertex _target;
-
-        private Vertex Target
-        {
-            get
-            {
-                if (Selection.objects == null || Selection.objects.Length == 0)
-                {
-                    return null;
-                }
-
-                var current = Selection.objects[0];
-                var gameObj = current as GameObject;
-                if (gameObj == null)
-                {
-                    return null;
-                }
-
-                var sceneGraph = gameObj.GetComponent<SceneGraph>();
-                if (sceneGraph == null)
-                {
-                    return null;
-                }
-
-                return sceneGraph.CurrentVertex;
-            }
-        }
-
-        public bool visible => Target != null;
-
-        private TextField _editName;
-
-        public override VisualElement CreatePanelContent()
-        {
-            var root = new VisualElement { name = "My Tool Root" };
-            if (Target != null)
-            {
-                _editName = new TextField();
-                _editName.isDelayed = true;
-                _editName.value = Target.Name;
-                _editName.RegisterValueChangedCallback(value =>
-                {
-                    Target.Name = value.newValue;
-                    _editName.value = Target.Name;
-                });
-                root.Add(_editName);
-            }
-
-            return root;
-        }
-
-        private void Update()
-        {
-            if (Target == null)
-            {
-                return;
-            }
-
-            _editName.value = Target.Name;
         }
     }
 }
