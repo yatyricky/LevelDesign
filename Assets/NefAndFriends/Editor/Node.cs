@@ -92,23 +92,14 @@ namespace NefAndFriends.LevelDesignerEditor
         public void SetVertexType(VertexType vertexType)
         {
             Vertex.Type = vertexType;
-            switch (vertexType)
+            DOM.style.backgroundColor = vertexType switch
             {
-                case VertexType.Normal:
-                    DOM.style.backgroundColor = new Color(0.239f, 0.294f, 0.329f);
-                    break;
-                case VertexType.Start:
-                    DOM.style.backgroundColor = new Color(0.082f, 0.235f, 0.467f);
-                    break;
-                case VertexType.Save:
-                    DOM.style.backgroundColor = new Color(0.467f, 0.294f, 0.082f);
-                    break;
-                case VertexType.Boss:
-                    DOM.style.backgroundColor = new Color(0.467f, 0.082f, 0.173f);
-                    break;
-                default:
-                    throw new ArgumentOutOfRangeException();
-            }
+                VertexType.Interest => new Color(0.153f, 0.682f, 0.376f),
+                VertexType.Start => new Color(0.161f, 0.502f, 0.725f),
+                VertexType.Save => new Color(0.827f, 0.329f, 0f),
+                VertexType.Boss => new Color(0.753f, 0.224f, 0.169f),
+                _ => throw new ArgumentOutOfRangeException()
+            };
         }
     }
 }

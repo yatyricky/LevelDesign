@@ -114,7 +114,7 @@ namespace NefAndFriends.LevelDesignerEditor
             _nodeEditorType = root.Q<ToolbarMenu>("node-type");
             _nodeEditor.style.display = DisplayStyle.None;
 
-            _nodeEditorType.menu.AppendAction("POI", SetNodeEditorType, GetNodeEditorType, VertexType.Normal);
+            _nodeEditorType.menu.AppendAction("POI", SetNodeEditorType, GetNodeEditorType, VertexType.Interest);
             _nodeEditorType.menu.AppendAction("Start", SetNodeEditorType, GetNodeEditorType, VertexType.Start);
             _nodeEditorType.menu.AppendAction("Save", SetNodeEditorType, GetNodeEditorType, VertexType.Save);
             _nodeEditorType.menu.AppendAction("Boss", SetNodeEditorType, GetNodeEditorType, VertexType.Boss);

@@ -2,7 +2,7 @@
 {
     public enum VertexType
     {
-        Normal,
+        Interest,
         Start,
         Save,
         Boss

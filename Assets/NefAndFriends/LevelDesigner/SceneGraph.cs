@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using UnityEditor;
 using UnityEditorInternal;
 using UnityEngine;
@@ -24,7 +23,7 @@ namespace NefAndFriends.LevelDesigner
 
         private static readonly Dictionary<VertexType, string> LabelTextureAssetNames = new()
         {
-            { VertexType.Normal, "Assets/NefAndFriends/Editor/Textures/label_normal.png" },
+            { VertexType.Interest, "Assets/NefAndFriends/Editor/Textures/label_normal.png" },
             { VertexType.Start, "Assets/NefAndFriends/Editor/Textures/label_start.png" },
             { VertexType.Save, "Assets/NefAndFriends/Editor/Textures/label_save.png" },
             { VertexType.Boss, "Assets/NefAndFriends/Editor/Textures/label_boss.png" },
@@ -55,10 +54,10 @@ namespace NefAndFriends.LevelDesigner
             {
                 draggable = false,
                 multiSelect = true,
+                displayAdd = false,
+                displayRemove = false,
                 drawHeaderCallback = DrawVertexHeader,
                 drawElementCallback = DrawVertex,
-                onAddCallback = DrawAddVertex,
-                onRemoveCallback = DrawRemoveVertex
             };
         }
 
@@ -74,19 +73,6 @@ namespace NefAndFriends.LevelDesigner
             vertex.SetParent(graph);
             vertex.Name = EditorGUI.TextField(new Rect(rect.x + VertexBulletinWidth, rect.y, rect.width - VertexTypeWidth - VertexBulletinWidth, rect.height), vertex.Name);
             vertex.Type = (VertexType)EditorGUI.EnumPopup(new Rect(rect.x + rect.width - VertexTypeWidth, rect.y, VertexTypeWidth, rect.height), vertex.Type);
-        }
-
-        private void DrawAddVertex(ReorderableList list)
-        {
-            This.graph.AddVertex();
-        }
-
-        private void DrawRemoveVertex(ReorderableList list)
-        {
-            for (var i = list.selectedIndices.Count - 1; i >= 0; i--)
-            {
-                This.graph.RemoveVertex(This.graph.vertices[list.selectedIndices[i]]);
-            }
         }
 
         public override void OnInspectorGUI()
@@ -118,42 +104,8 @@ namespace NefAndFriends.LevelDesigner
 
         private void OnSceneGUI()
         {
-            var shift = Event.current.shift;
-            if (Event.current.type == EventType.MouseDown)
-            {
-                var camera = SceneView.currentDrawingSceneView.camera;
-                var position = camera.transform.position;
-                var distanceFromCam = new Vector3(position.x, position.y, 0);
-                var plane = new Plane(Vector3.forward, distanceFromCam);
-                var ray = HandleUtility.GUIPointToWorldRay(Event.current.mousePosition);
-                var worldPos = Vector3.zero;
-                if (plane.Raycast(ray, out var enter))
-                {
-                    worldPos = ray.GetPoint(enter);
-                }
-
-                var nearest = (from e in This.graph.vertices select (dist: (e.Position - worldPos).sqrMagnitude, elem: e) into tuple orderby tuple.dist select tuple.elem).FirstOrDefault();
-                if (nearest != null)
-                {
-                    This.CurrentVertex = nearest;
-                }
-
-                if (Event.current.button == 1 && shift)
-                {
-                    var menu = new GenericMenu();
-                    menu.AddItem(new GUIContent("New Node"), false, CreateVertex, worldPos);
-
-                    if (This.CurrentVertex != null)
-                    {
-                        menu.AddItem(new GUIContent($"Delete {This.CurrentVertex.Name}"), false, DeleteVertex, This.CurrentVertex);
-                    }
-
-                    menu.ShowAsContext();
-                    Event.current.Use();
-                }
-            }
-
             EditorGUI.BeginChangeCheck();
+            var buttonClicked = false;
             foreach (var vertex in This.graph.vertices)
             {
                 var style = new GUIStyle(EditorStyles.label)
@@ -166,8 +118,14 @@ namespace NefAndFriends.LevelDesigner
                     }
                 };
 
-                Handles.Label(vertex.Position, new GUIContent(vertex.Name), style);
-                if (shift)
+                if (HandlesButton(vertex.Position, new GUIContent(vertex.Name), style))
+                {
+                    This.CurrentVertex = vertex;
+                    buttonClicked = true;
+                    Repaint();
+                }
+
+                if (This.CurrentVertex == vertex)
                 {
                     vertex.Position = Handles.PositionHandle(vertex.Position, Quaternion.identity);
                 }
@@ -177,6 +135,49 @@ namespace NefAndFriends.LevelDesigner
             {
                 EditorUtility.SetDirty(This);
             }
+
+            if (Event.current.shift && Event.current.type == EventType.MouseDown || buttonClicked)
+            {
+                if (Event.current.button == 1)
+                {
+                    var camera = SceneView.currentDrawingSceneView.camera;
+                    var position = camera.transform.position;
+                    var plane = new Plane(Vector3.forward, new Vector3(position.x, position.y, 0));
+                    var ray = HandleUtility.GUIPointToWorldRay(Event.current.mousePosition);
+                    var worldPos = Vector3.zero;
+                    if (plane.Raycast(ray, out var enter))
+                    {
+                        worldPos = ray.GetPoint(enter);
+                    }
+
+                    var menu = new GenericMenu();
+                    if (This.CurrentVertex != null && buttonClicked)
+                    {
+                        menu.AddItem(new GUIContent($"Delete {This.CurrentVertex.Name}"), false, DeleteVertex, This.CurrentVertex);
+                    }
+                    else
+                    {
+                        menu.AddItem(new GUIContent("New Node"), false, CreateVertex, worldPos);
+                    }
+
+                    menu.ShowAsContext();
+                    Event.current.Use();
+                }
+            }
+        }
+
+        private static bool HandlesButton(Vector3 position, GUIContent content, GUIStyle style)
+        {
+            if (HandleUtility.WorldToGUIPointWithDepth(position).z < 0.0)
+            {
+                return false;
+            }
+
+            Handles.BeginGUI();
+            var rect = HandleUtility.WorldPointToSizedRect(position, content, style);
+            var click = GUI.Button(new Rect(rect.x, rect.y + 16, rect.width, rect.height), content, style);
+            Handles.EndGUI();
+            return click;
         }
 
         private void CreateVertex(object worldPos)
