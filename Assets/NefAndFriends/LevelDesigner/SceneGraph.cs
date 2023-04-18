@@ -104,6 +104,7 @@ namespace NefAndFriends.LevelDesigner
 
         private void OnSceneGUI()
         {
+            // draw and edit vertices
             EditorGUI.BeginChangeCheck();
             var buttonClicked = false;
             foreach (var vertex in This.graph.vertices)
@@ -136,6 +137,32 @@ namespace NefAndFriends.LevelDesigner
                 EditorUtility.SetDirty(This);
             }
 
+            // draw edges
+            foreach (var edge in This.graph.edges)
+            {
+                var v1 = edge.from.Position;
+                var v2 = edge.to.Position;
+                Handles.DrawLine(v1, v2);
+                switch (edge.Type)
+                {
+                    case EdgeType.Directed:
+                        var v3 = v1 - v2;
+                        var mag = v3.magnitude;
+                        v3.Normalize();
+                        v3 *= Mathf.Min(mag * 0.1f, 0.5f);
+                        var va = Quaternion.AngleAxis(15, Vector3.back) * v3;
+                        var vb = Quaternion.AngleAxis(15, Vector3.forward) * v3;
+                        Handles.DrawLine(v2, v2 + va);
+                        Handles.DrawLine(v2, v2 + vb);
+                        break;
+                    case EdgeType.ShortCut:
+                        break;
+                    case EdgeType.Mechanism:
+                        break;
+                }
+            }
+
+            // mouse event
             if (Event.current.shift && Event.current.type == EventType.MouseDown || buttonClicked)
             {
                 if (Event.current.button == 1)
