@@ -94,7 +94,7 @@ namespace NefAndFriends.LevelDesignerEditor
             Vertex.Type = vertexType;
             DOM.style.backgroundColor = vertexType switch
             {
-                VertexType.Interest => new Color(0.153f, 0.682f, 0.376f),
+                VertexType.POI => new Color(0.153f, 0.682f, 0.376f),
                 VertexType.Start => new Color(0.161f, 0.502f, 0.725f),
                 VertexType.Save => new Color(0.827f, 0.329f, 0f),
                 VertexType.Boss => new Color(0.753f, 0.224f, 0.169f),

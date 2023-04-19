@@ -139,17 +139,17 @@ namespace NefAndFriends.LevelDesigner
                                 vertex.Type = VertexType.Save;
                                 break;
                             case "poi":
-                                vertex.Type = VertexType.Interest;
+                                vertex.Type = VertexType.POI;
                                 break;
                             default:
                                 Debug.LogError($"Unknown Vertex Type @ line {line}. Allowed: start|boss|save|poi");
-                                vertex.Type = VertexType.Interest;
+                                vertex.Type = VertexType.POI;
                                 break;
                         }
                     }
                     else
                     {
-                        vertex.Type = VertexType.Interest;
+                        vertex.Type = VertexType.POI;
                     }
 
                     continue;

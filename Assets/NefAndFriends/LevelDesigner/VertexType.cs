@@ -2,7 +2,7 @@
 {
     public enum VertexType
     {
-        Interest,
+        POI,
         Start,
         Save,
         Boss

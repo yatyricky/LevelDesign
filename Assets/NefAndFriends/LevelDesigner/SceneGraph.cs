@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using UnityEditor;
 using UnityEditorInternal;
 using UnityEngine;
@@ -23,25 +24,29 @@ namespace NefAndFriends.LevelDesigner
 
         private static readonly Dictionary<VertexType, string> LabelTextureAssetNames = new()
         {
-            { VertexType.Interest, "Assets/NefAndFriends/Editor/Textures/label_normal.png" },
-            { VertexType.Start, "Assets/NefAndFriends/Editor/Textures/label_start.png" },
-            { VertexType.Save, "Assets/NefAndFriends/Editor/Textures/label_save.png" },
-            { VertexType.Boss, "Assets/NefAndFriends/Editor/Textures/label_boss.png" },
+            { VertexType.POI, "label_normal" },
+            { VertexType.Start, "label_start" },
+            { VertexType.Save, "label_save" },
+            { VertexType.Boss, "label_boss" },
         };
 
-        private static Dictionary<VertexType, Texture2D> _labelTextures;
+        private static Dictionary<string, Texture2D> _editorTextures;
 
-        private static Texture2D GetLabelTexture(VertexType type)
+        private static Texture2D GetEditorTexture(string fileName)
         {
-            _labelTextures ??= new Dictionary<VertexType, Texture2D>();
-
-            if (!_labelTextures.TryGetValue(type, out var texture))
+            _editorTextures ??= new Dictionary<string, Texture2D>();
+            if (!_editorTextures.TryGetValue(fileName, out var texture))
             {
-                texture = AssetDatabase.LoadAssetAtPath<Texture2D>(LabelTextureAssetNames[type]);
-                _labelTextures.Add(type, texture);
+                texture = AssetDatabase.LoadAssetAtPath<Texture2D>($"Assets/NefAndFriends/Editor/Textures/{fileName}.png");
+                _editorTextures.Add(fileName, texture);
             }
 
             return texture;
+        }
+
+        private static Texture2D GetLabelTexture(VertexType type)
+        {
+            return GetEditorTexture(LabelTextureAssetNames[type]);
         }
 
         private SceneGraph This => target as SceneGraph;
@@ -116,10 +121,12 @@ namespace NefAndFriends.LevelDesigner
                     normal =
                     {
                         background = GetLabelTexture(vertex.Type),
-                    }
+                    },
+                    fixedHeight = 30,
                 };
 
-                if (HandlesButton(vertex.Position, new GUIContent(vertex.Name), style))
+                var pos = vertex.Position;
+                if (HandlesButton(pos, new GUIContent(vertex.Name), style))
                 {
                     This.CurrentVertex = vertex;
                     buttonClicked = true;
@@ -128,7 +135,24 @@ namespace NefAndFriends.LevelDesigner
 
                 if (This.CurrentVertex == vertex)
                 {
-                    vertex.Position = Handles.PositionHandle(vertex.Position, Quaternion.identity);
+                    vertex.Position = Handles.PositionHandle(pos, Quaternion.identity);
+                    var guiPos = HandleUtility.WorldToGUIPoint(pos);
+                    guiPos.y += 30;
+                    const int iWidth = 210;
+                    const int iBorder = 2;
+                    const int iLineHeight = 20;
+                    const int iLabelWidth = 60;
+                    Handles.BeginGUI();
+                    GUI.DrawTexture(new Rect(guiPos.x - iBorder, guiPos.y - iBorder, iWidth + iBorder * 2, iLineHeight * 2 + iBorder * 2), GetEditorTexture("4x4_191919"));
+                    GUI.DrawTexture(new Rect(guiPos.x, guiPos.y, iWidth, iLineHeight * 2), GetEditorTexture("4x4_383838"));
+                    var row = new Vector2(guiPos.x, guiPos.y);
+                    GUI.Label(new Rect(row.x, row.y, iLabelWidth, iLineHeight), "Name");
+                    vertex.Name = GUI.TextField(new Rect(row.x + iLabelWidth, row.y, iWidth - iLabelWidth, iLineHeight), vertex.Name);
+                    row.y += iLineHeight;
+                    GUI.Label(new Rect(row.x, row.y, iLabelWidth, iLineHeight), "Type");
+                    var types = Enum.GetValues(typeof(VertexType)).Cast<VertexType>().ToArray();
+                    vertex.Type = types[GUI.Toolbar(new Rect(row.x + iLabelWidth, row.y, iWidth - iLabelWidth, iLineHeight), Array.IndexOf(types, vertex.Type), types.Select(e => e.ToString()).ToArray())];
+                    Handles.EndGUI();
                 }
             }
 
@@ -140,25 +164,29 @@ namespace NefAndFriends.LevelDesigner
             // draw edges
             foreach (var edge in This.graph.edges)
             {
-                var v1 = edge.from.Position;
-                var v2 = edge.to.Position;
-                Handles.DrawLine(v1, v2);
-                switch (edge.Type)
+                if (edge.from != edge.to)
                 {
-                    case EdgeType.Directed:
-                        var v3 = v1 - v2;
-                        var mag = v3.magnitude;
-                        v3.Normalize();
-                        v3 *= Mathf.Min(mag * 0.1f, 0.5f);
-                        var va = Quaternion.AngleAxis(15, Vector3.back) * v3;
-                        var vb = Quaternion.AngleAxis(15, Vector3.forward) * v3;
-                        Handles.DrawLine(v2, v2 + va);
-                        Handles.DrawLine(v2, v2 + vb);
-                        break;
-                    case EdgeType.ShortCut:
-                        break;
-                    case EdgeType.Mechanism:
-                        break;
+                    var v1 = edge.from.Position;
+                    var v2 = edge.to.Position;
+                    Handles.DrawLine(v1, v2, 2);
+                    var v3 = v1 - v2;
+                    var mag = v3.magnitude;
+                    switch (edge.Type)
+                    {
+                        case EdgeType.Directed:
+                            v3.Normalize();
+                            v3 *= Mathf.Min(mag * 0.1f, 0.5f);
+                            var va = Quaternion.AngleAxis(15, Vector3.back) * v3;
+                            var vb = Quaternion.AngleAxis(15, Vector3.forward) * v3;
+                            Handles.DrawLine(v2, v2 + va, 2);
+                            Handles.DrawLine(v2, v2 + vb, 2);
+                            break;
+                        case EdgeType.ShortCut:
+                            Handles.DrawWireArc(v2 + v3 * 0.4f, Vector3.back, Quaternion.AngleAxis(90, Vector3.back) * v3, 180, 0.1f);
+                            break;
+                        case EdgeType.Mechanism:
+                            break;
+                    }
                 }
             }
 

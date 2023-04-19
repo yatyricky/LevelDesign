@@ -77,7 +77,7 @@ namespace NefAndFriends.LevelDesigner
         {
             return Type switch
             {
-                VertexType.Interest => "poi",
+                VertexType.POI => "poi",
                 VertexType.Start => "start",
                 VertexType.Save => "save",
                 VertexType.Boss => "boss",
