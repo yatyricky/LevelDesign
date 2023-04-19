@@ -326,6 +326,16 @@ namespace NefAndFriends.LevelDesigner
             return RemoveEdge(edge.Index);
         }
 
+        public List<Edge> GetOutgoingEdges(Vertex vertex)
+        {
+            return _vertexEdge[vertex.Index].Where(e => e.from == vertex).ToList();
+        }
+
+        public List<Edge> GetIncomingEdges(Vertex vertex)
+        {
+            return _vertexEdge[vertex.Index].Where(e => e.to == vertex).ToList();
+        }
+
         #endregion
 
         public bool IsConnected

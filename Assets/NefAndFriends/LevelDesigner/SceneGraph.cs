@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using UnityEditor;
 using UnityEditorInternal;
@@ -82,28 +81,12 @@ namespace NefAndFriends.LevelDesigner
 
         public override void OnInspectorGUI()
         {
-            base.OnInspectorGUI();
-
-            EditorGUILayout.TextArea(This.graph.TakeSnapShot());
-
             EditorGUI.BeginChangeCheck();
             _verticesList.DoLayoutList();
-
-            if (This.CurrentVertex != null)
-            {
-                EditorGUILayout.LabelField("Current Vertex");
-                var rect = EditorGUILayout.GetControlRect(false);
-                DrawVertex(rect, This.CurrentVertex.Index, false, false);
-            }
 
             if (EditorGUI.EndChangeCheck())
             {
                 EditorUtility.SetDirty(This);
-            }
-
-            if (GUILayout.Button("Read"))
-            {
-                This.graph = Graph.Parse(File.ReadAllText("Assets/Levels/simple.txt"));
             }
         }
 
@@ -114,6 +97,7 @@ namespace NefAndFriends.LevelDesigner
             var buttonClicked = false;
             foreach (var vertex in This.graph.vertices)
             {
+                vertex.SetParent(This.graph);
                 var style = new GUIStyle(EditorStyles.label)
                 {
                     fontSize = 16,
@@ -142,16 +126,62 @@ namespace NefAndFriends.LevelDesigner
                     const int iBorder = 2;
                     const int iLineHeight = 20;
                     const int iLabelWidth = 60;
+                    const int iTextWidth = 100;
+                    const int iCloseButton = 20;
+                    const int iLines = 2;
+
+                    var outgoingEdges = This.graph.GetOutgoingEdges(vertex);
+                    var incomingEdges = This.graph.GetIncomingEdges(vertex);
+                    var totalLines = iLines + (outgoingEdges.Count > 0 ? outgoingEdges.Count + 1 : 0) + (incomingEdges.Count > 0 ? incomingEdges.Count + 1 : 0);
+
                     Handles.BeginGUI();
-                    GUI.DrawTexture(new Rect(guiPos.x - iBorder, guiPos.y - iBorder, iWidth + iBorder * 2, iLineHeight * 2 + iBorder * 2), GetEditorTexture("4x4_191919"));
-                    GUI.DrawTexture(new Rect(guiPos.x, guiPos.y, iWidth, iLineHeight * 2), GetEditorTexture("4x4_383838"));
+                    GUI.DrawTexture(new Rect(guiPos.x - iBorder, guiPos.y - iBorder, iWidth + iBorder * 2, iLineHeight * totalLines + iBorder * 2), GetEditorTexture("4x4_191919"));
+                    GUI.DrawTexture(new Rect(guiPos.x, guiPos.y, iWidth, iLineHeight * totalLines), GetEditorTexture("4x4_383838"));
+
                     var row = new Vector2(guiPos.x, guiPos.y);
                     GUI.Label(new Rect(row.x, row.y, iLabelWidth, iLineHeight), "Name");
                     vertex.Name = GUI.TextField(new Rect(row.x + iLabelWidth, row.y, iWidth - iLabelWidth, iLineHeight), vertex.Name);
+
                     row.y += iLineHeight;
                     GUI.Label(new Rect(row.x, row.y, iLabelWidth, iLineHeight), "Type");
                     var types = Enum.GetValues(typeof(VertexType)).Cast<VertexType>().ToArray();
                     vertex.Type = types[GUI.Toolbar(new Rect(row.x + iLabelWidth, row.y, iWidth - iLabelWidth, iLineHeight), Array.IndexOf(types, vertex.Type), types.Select(e => e.ToString()).ToArray())];
+
+                    var edgeTypes = Enum.GetValues(typeof(EdgeType)).Cast<EdgeType>().ToArray();
+                    var edgeOptions = edgeTypes.Select(e => e.ToString()[0].ToString()).ToArray();
+
+                    void DrawEdgeInspector(Edge edge, Vertex other)
+                    {
+                        edge.SetParent(This.graph);
+                        row.y += iLineHeight;
+                        GUI.Label(new Rect(row.x, row.y, iTextWidth, iLineHeight), other.Name + (other == vertex ? "↺" : ""));
+                        edge.Type = edgeTypes[GUI.Toolbar(new Rect(row.x + iTextWidth, row.y, iWidth - iTextWidth - iCloseButton, iLineHeight), Array.IndexOf(edgeTypes, edge.Type), edgeOptions)];
+                        if (GUI.Button(new Rect(row.x + iWidth - iCloseButton, row.y, iCloseButton, iLineHeight), GetEditorTexture("close"), new GUIStyle(GUI.skin.label)))
+                        {
+                            This.graph.RemoveEdge(edge);
+                        }
+                    }
+
+                    if (outgoingEdges.Count > 0)
+                    {
+                        row.y += iLineHeight;
+                        GUI.Label(new Rect(row.x, row.y, iWidth, iLineHeight), "Outgoing Edges");
+                        foreach (var edge in outgoingEdges)
+                        {
+                            DrawEdgeInspector(edge, edge.to);
+                        }
+                    }
+
+                    if (incomingEdges.Count > 0)
+                    {
+                        row.y += iLineHeight;
+                        GUI.Label(new Rect(row.x, row.y, iWidth, iLineHeight), "Incoming Edges");
+                        foreach (var edge in incomingEdges)
+                        {
+                            DrawEdgeInspector(edge, edge.from);
+                        }
+                    }
+
                     Handles.EndGUI();
                 }
             }
@@ -168,23 +198,26 @@ namespace NefAndFriends.LevelDesigner
                 {
                     var v1 = edge.from.Position;
                     var v2 = edge.to.Position;
-                    Handles.DrawLine(v1, v2, 2);
+                    Handles.DrawLine(v1, v2, 3);
                     var v3 = v1 - v2;
                     var mag = v3.magnitude;
+                    var capSize = 0.1f * mag;
                     switch (edge.Type)
                     {
+                        case EdgeType.Mechanism:
+                            Handles.DrawSolidDisc(v1 - v3.normalized * (capSize * 0.3f), Vector3.back, capSize * 0.3f);
+                            goto case EdgeType.Directed;
                         case EdgeType.Directed:
                             v3.Normalize();
-                            v3 *= Mathf.Min(mag * 0.1f, 0.5f);
+                            v3 *= capSize;
+                            // v3 *= Mathf.Min(mag * 0.1f, 0.5f);
                             var va = Quaternion.AngleAxis(15, Vector3.back) * v3;
                             var vb = Quaternion.AngleAxis(15, Vector3.forward) * v3;
-                            Handles.DrawLine(v2, v2 + va, 2);
-                            Handles.DrawLine(v2, v2 + vb, 2);
+                            Handles.DrawLine(v2, v2 + va, 3);
+                            Handles.DrawLine(v2, v2 + vb, 3);
                             break;
                         case EdgeType.ShortCut:
-                            Handles.DrawWireArc(v2 + v3 * 0.4f, Vector3.back, Quaternion.AngleAxis(90, Vector3.back) * v3, 180, 0.1f);
-                            break;
-                        case EdgeType.Mechanism:
+                            Handles.DrawWireArc(v2 + v3 * 0.6f, Vector3.back, Quaternion.AngleAxis(90, Vector3.back) * v3, 180, capSize / 2f, 3f);
                             break;
                     }
                 }
