@@ -6,13 +6,13 @@ A Unity implementation of https://zhuanlan.zhihu.com/p/415025159
 
 ### Stability Factor γ (稳定因子) [1]
 
-A normalized and fast converging scalar that is calculated out from various orders of Cheeger constant.
+A normalized and fast converging scalar that is calculated out from various orders of Cheeger Number.
 
 $$\gamma_\infty=\lim_{m\to\infty}\frac{\sum_{i=1}^{m}\frac{1}{i!}\lambda_i}{\sum_{i=1}^{m}\frac{1}{i!}}=\frac{1}{e}\lim_{m\to\infty}\sum_{i=1}^{m}\frac{1}{i!}\lambda_i$$
 
-where $\lambda_i$ is the $i$th order Cheeger constant.
+where $\lambda_i$ is the $i$th order Cheeger Number.
 
-### Cheeger Constant
+### Cheeger Number
 
 $$\lambda_k=1-\frac{n}{C_m^k}$$
 
@@ -57,7 +57,6 @@ D->D
 # References
 
 - [1]尼莫. (2021). 如何设计一张有“魂味”的地图？——论“类魂”游戏关卡的拓扑结构. https://zhuanlan.zhihu.com/p/415025159
-- [2]https://en.wikipedia.org/wiki/Cheeger_constant_(graph_theory)
 
 # Credits
 
