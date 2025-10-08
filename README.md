@@ -1,6 +1,6 @@
 # Level Design
 
-A Unity implementation of https://zhuanlan.zhihu.com/p/415025159
+使用网页实现 https://zhuanlan.zhihu.com/p/415025159
 
 ## Definition
 
@@ -16,11 +16,9 @@ where $\lambda_i$ is the $i$th order Cheeger Number.
 
 $$\lambda_k=1-\frac{n}{C_m^k}$$
 
-# Environment
-
-Unity: 2022.1.0b16+
-
 # 如何使用
+
+下载 node-calculator.html 并使用浏览器打开即可。
 
 ## Graph格式
 
@@ -48,16 +46,6 @@ D->D
 `>>`|单向门|Shortcut
 `*>`|机关门|Mechanism
 
-## 图形化操作
-
-1. 打开 Window/Level Designer <kbd>Shift</kbd>+<kbd>1</kbd> 工具
-2. 点击`打开`并选择你的txt文件
-3. 计算3阶稳定因子
-
 # References
 
 - [1]尼莫. (2021). 如何设计一张有“魂味”的地图？——论“类魂”游戏关卡的拓扑结构. https://zhuanlan.zhihu.com/p/415025159
-
-# Credits
-
-- Tilemap assets: https://cainos.itch.io/pixel-art-top-down-basic
