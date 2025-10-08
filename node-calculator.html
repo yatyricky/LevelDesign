@@ -1,0 +1,1841 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Node-Based Calculator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #1e1e1e;
+            color: white;
+            overflow: hidden;
+        }
+
+        .header {
+            background: #333;
+            padding: 10px 20px;
+            border-bottom: 1px solid #555;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .btn {
+            background: #007acc;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .btn:hover {
+            background: #005a9e;
+        }
+
+        .btn:disabled {
+            background: #555;
+            cursor: not-allowed;
+        }
+
+        .container {
+            display: flex;
+            height: calc(100vh - 50px);
+        }
+
+        .canvas-area {
+            flex: 1;
+            position: relative;
+            background: #2d2d2d;
+            overflow: hidden;
+            cursor: grab;
+        }
+
+        .canvas-area.dragging {
+            cursor: grabbing;
+        }
+
+        .canvas {
+            position: absolute;
+            width: 5000px;  /* Large canvas for infinite feel */
+            height: 5000px;
+            background: 
+                radial-gradient(circle at 10px 10px, rgba(255,255,255,0.1) 1px, transparent 1px);
+            background-size: 20px 20px;
+            left: -2500px;  /* Center the large canvas */
+            top: -2500px;
+            pointer-events: auto; /* Restore pointer events for nodes */
+        }
+
+        .node {
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            border: 2px solid #666;
+            background: #444;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            user-select: none;
+            font-size: 10px;
+            text-align: center;
+            transition: all 0.2s;
+        }
+
+        .node:hover .connection-handle {
+            opacity: 1;
+        }
+
+        .node.dragging {
+            transition: none !important;
+        }
+
+        .node.selected {
+            border-color: #007acc;
+            box-shadow: 0 0 10px rgba(0, 122, 204, 0.5);
+        }
+
+        .node.poi { background: #444; border-color: #666; }
+        .node.start { background: #2d7d32; border-color: #4caf50; }
+        .node.save { background: #f57c00; border-color: #ff9800; }
+        .node.boss { background: #c62828; border-color: #f44336; }
+
+        .connection {
+            position: absolute;
+            pointer-events: auto;
+            z-index: 1;
+            cursor: pointer;
+        }
+
+        .connection-line {
+            stroke: #666;
+            stroke-width: 2;
+            fill: none;
+            cursor: pointer;
+        }
+
+        .connection-line:hover {
+            stroke-width: 4;
+        }
+
+        .connection.selected .connection-line {
+            stroke: #007acc;
+            stroke-width: 3;
+        }
+
+        .connection.undirected .connection-line { stroke-dasharray: none; }
+        .connection.directed .connection-line { stroke-dasharray: none; }
+        .connection.shortcut .connection-line { stroke-dasharray: 5,5; stroke: #00bcd4; }
+        .connection.mechanism .connection-line { stroke-dasharray: 2,2; stroke: #ff5722; }
+
+        /* Self-connection circles */
+        .self-connection-circle {
+            stroke: #666;
+            stroke-width: 2;
+            fill: none;
+            cursor: pointer;
+        }
+
+        .connection.selected .self-connection-circle {
+            stroke: #007acc;
+            stroke-width: 3;
+        }
+
+        .connection.undirected .self-connection-circle { stroke-dasharray: none; }
+        .connection.directed .self-connection-circle { stroke-dasharray: none; }
+        .connection.shortcut .self-connection-circle { stroke-dasharray: 5,5; stroke: #00bcd4; }
+        .connection.mechanism .self-connection-circle { stroke-dasharray: 2,2; stroke: #ff5722; }
+
+        /* Marker path for middle markers */
+        .marker-path {
+            fill: none;
+            stroke: transparent;
+            stroke-width: 1;
+        }
+
+        .sidebar {
+            width: 300px;
+            background: #252525;
+            border-left: 1px solid #555;
+            padding: 15px;
+            overflow-y: auto;
+        }
+
+        .section {
+            margin-bottom: 20px;
+        }
+
+        .section h3 {
+            margin-bottom: 10px;
+            color: #ccc;
+            font-size: 14px;
+        }
+
+        .form-group {
+            margin-bottom: 10px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 12px;
+            color: #aaa;
+        }
+
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 6px;
+            background: #333;
+            border: 1px solid #555;
+            color: white;
+            border-radius: 3px;
+            font-size: 12px;
+        }
+
+        .drop-zone {
+            border: 2px dashed #666;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            color: #aaa;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .drop-zone.dragover {
+            border-color: #007acc;
+            background: rgba(0, 122, 204, 0.1);
+        }
+
+        .output-area {
+            margin-top: 10px;
+        }
+
+        .output-area textarea {
+            width: 100%;
+            height: 200px;
+            background: #1a1a1a;
+            border: 1px solid #555;
+            color: #ccc;
+            padding: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 11px;
+            resize: vertical;
+        }
+
+        .context-menu {
+            position: absolute;
+            background: #333;
+            border: 1px solid #555;
+            border-radius: 4px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            z-index: 1000;
+            min-width: 150px;
+        }
+
+        .context-menu-item {
+            padding: 8px 12px;
+            cursor: pointer;
+            font-size: 12px;
+            border-bottom: 1px solid #444;
+        }
+
+        .context-menu-item:hover {
+            background: #444;
+        }
+
+        .context-menu-item:last-child {
+            border-bottom: none;
+        }
+
+        .temp-connection {
+            position: absolute;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .connection-handle {
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            background: #007acc;
+            border: 2px solid #fff;
+            border-radius: 50%;
+            cursor: grab;
+            z-index: 15;
+            opacity: 0;
+            transition: opacity 0.2s;
+            transform: translate(-50%, -50%);
+            pointer-events: auto;
+        }
+
+        .connection-handle:hover,
+        .connection-handle.dragging {
+            background: #005a9e;
+            transform: translate(-50%, -50%) scale(1.2);
+            pointer-events: auto;
+        }
+
+        .temp-connection-line {
+            position: absolute;
+            pointer-events: none;
+            z-index: 10;
+            stroke: #007acc;
+            stroke-width: 2;
+            stroke-dasharray: 5,5;
+            fill: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <button class="btn" onclick="newGraph()">New</button>
+        <button class="btn" onclick="calculateStability()">Calculate Stability</button>
+        <button class="btn" onclick="exportGraph()">Export</button>
+        <span style="margin-left: 20px; font-size: 12px;" id="fileName">Untitled Graph</span>
+    </div>
+
+    <div class="container">
+        <div class="canvas-area" id="canvasArea">
+            <div class="canvas" id="canvas"></div>
+        </div>
+
+        <div class="sidebar">
+            <div class="section">
+                <h3>File Operations</h3>
+                <div class="drop-zone" id="dropZone">
+                    Drop .txt file here or click to select
+                    <input type="file" id="fileInput" accept=".txt" style="display: none;">
+                </div>
+            </div>
+
+            <div class="section" id="nodeEditor" style="display: none;">
+                <h3>Node Properties</h3>
+                <div class="form-group">
+                    <label>Name:</label>
+                    <input type="text" id="nodeName" onchange="updateSelectedNode()">
+                </div>
+                <div class="form-group">
+                    <label>Type:</label>
+                    <select id="nodeType" onchange="updateSelectedNode()">
+                        <option value="poi">POI</option>
+                        <option value="start">Start</option>
+                        <option value="save">Save</option>
+                        <option value="boss">Boss</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Weight:</label>
+                    <input type="number" id="nodeWeight" value="1" step="0.1" onchange="updateSelectedNode()">
+                </div>
+                <div class="form-group">
+                    <label>Position X:</label>
+                    <input type="number" id="nodeX" step="0.01" onchange="updateSelectedNodePosition()">
+                </div>
+                <div class="form-group">
+                    <label>Position Y:</label>
+                    <input type="number" id="nodeY" step="0.01" onchange="updateSelectedNodePosition()">
+                </div>
+            </div>
+
+            <div class="section" id="connectionEditor" style="display: none;">
+                <h3>Connection Properties</h3>
+                <div class="form-group">
+                    <label>Type:</label>
+                    <select id="connectionType" onchange="updateSelectedConnection()">
+                        <option value="undirected">Undirected (--)</option>
+                        <option value="directed">Directed (->)</option>
+                        <option value="shortcut">Shortcut (>>)</option>
+                        <option value="mechanism">Mechanism (*>)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <button class="btn" onclick="reverseConnection()">Reverse Direction</button>
+                </div>
+            </div>
+
+            <div class="section">
+                <h3>Output</h3>
+                <div class="output-area">
+                    <textarea id="outputText" readonly placeholder="Graph data will appear here..."></textarea>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class NodeCalculator {
+            constructor() {
+                this.canvas = document.getElementById('canvas');
+                this.canvasArea = document.getElementById('canvasArea');
+                this.nodes = new Map();
+                this.connections = new Map();
+                this.selectedNode = null;
+                this.selectedConnection = null;
+                this.isDragging = false;
+                this.isConnecting = false;
+                this.connectingFrom = null;
+                this.panOffset = { x: 2500, y: 2500 }; // Center the large canvas in viewport
+                this.lastMousePos = { x: 0, y: 0 };
+                this.nodeCounter = 0;
+                this.isDraggingNode = false;
+                this.draggingNode = null;
+                this.isDraggingHandle = false;
+                this.draggingHandle = null;
+                this.tempConnection = null;
+
+                this.setupEventListeners();
+                this.updateCanvasPosition();
+                
+                // Test node creation
+                this.createNode('TestNode', 200, 200, 'start', 1);
+                this.createNode('TestNode2', 350, 250, 'poi', 1);
+            }
+
+            logClick(e) {
+                const clickInfo = {
+                    timestamp: new Date().toLocaleTimeString(),
+                    target: e.target,
+                    tagName: e.target.tagName,
+                    className: e.target.className,
+                    id: e.target.id,
+                    textContent: e.target.textContent?.substring(0, 50), // Limit text length
+                    coordinates: {
+                        screenX: e.clientX,
+                        screenY: e.clientY,
+                        pageX: e.pageX,
+                        pageY: e.pageY
+                    },
+                    modifiers: {
+                        shift: e.shiftKey,
+                        ctrl: e.ctrlKey,
+                        alt: e.altKey,
+                        meta: e.metaKey
+                    },
+                    button: e.button, // 0=left, 1=middle, 2=right
+                    eventType: e.type
+                };
+
+                // Check if clicking on a connection/edge and handle nearest edge selection
+                if (e.target.classList.contains('connection-line') || e.target.closest('.connection')) {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    
+                    const nearestEdge = this.findNearestEdge(e.clientX, e.clientY);
+                    if (nearestEdge) {
+                        this.selectConnection(nearestEdge);
+                        console.log(`🎯 Selected nearest edge: ${nearestEdge.from.name} -> ${nearestEdge.to.name}`);
+                        return; // Prevent further processing
+                    }
+                }
+
+                // Determine what was clicked
+                let clickedItem = 'Unknown';
+                if (e.target.classList.contains('node')) {
+                    const nodeName = e.target.textContent;
+                    clickedItem = `Node: ${nodeName}`;
+                } else if (e.target.classList.contains('connection-line') || e.target.closest('.connection')) {
+                    clickedItem = 'Connection/Edge';
+                } else if (e.target.classList.contains('connection-handle')) {
+                    clickedItem = 'Connection Handle';
+                } else if (e.target.classList.contains('btn')) {
+                    clickedItem = `Button: ${e.target.textContent}`;
+                } else if (e.target.classList.contains('context-menu-item')) {
+                    clickedItem = `Context Menu: ${e.target.textContent}`;
+                } else if (e.target === this.canvas) {
+                    clickedItem = 'Canvas';
+                } else if (e.target === this.canvasArea) {
+                    clickedItem = 'Canvas Area';
+                } else if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' || e.target.tagName === 'TEXTAREA') {
+                    clickedItem = `Form Element: ${e.target.tagName} (${e.target.name || e.target.id})`;
+                } else if (e.target.closest('.sidebar')) {
+                    clickedItem = 'Sidebar Element';
+                }
+
+                // Log to console with color coding
+                console.group(`🖱️ CLICK: ${clickedItem}`);
+                console.log('📍 What:', clickedItem);
+                console.log('🎯 Element:', e.target);
+                console.log('📋 Class:', e.target.className);
+                console.log('🆔 ID:', e.target.id);
+                console.log('📝 Text:', e.target.textContent?.substring(0, 100));
+                console.log('📐 Coordinates:', clickInfo.coordinates);
+                console.log('⌨️ Modifiers:', clickInfo.modifiers);
+                console.log('🖲️ Button:', clickInfo.button === 0 ? 'Left' : clickInfo.button === 1 ? 'Middle' : 'Right');
+                console.log('⏰ Time:', clickInfo.timestamp);
+                
+                // Log current application state
+                console.log('🔄 App State:', {
+                    isDragging: this.isDragging,
+                    isDraggingNode: this.isDraggingNode,
+                    isDraggingHandle: this.isDraggingHandle,
+                    isConnecting: this.isConnecting,
+                    selectedNode: this.selectedNode?.name,
+                    connectingFrom: this.connectingFrom?.name,
+                    nodeCount: this.nodes.size,
+                    connectionCount: this.connections.size
+                });
+                console.groupEnd();
+
+                // Also create a simplified one-liner for quick scanning
+                console.log(`🖱️ ${clickInfo.timestamp} - Clicked: ${clickedItem} at (${e.clientX}, ${e.clientY})`);
+            }
+
+            findNearestEdge(clientX, clientY) {
+                let nearestEdge = null;
+                let minDistance = Infinity;
+                
+                const canvasAreaRect = this.canvasArea.getBoundingClientRect();
+                const clickX = clientX - canvasAreaRect.left;
+                const clickY = clientY - canvasAreaRect.top;
+                
+                console.log(`🔍 Finding nearest edge to click at (${clickX}, ${clickY})`);
+                
+                for (const [id, connection] of this.connections) {
+                    const distance = this.calculateDistanceToEdge(connection, clickX, clickY);
+                    console.log(`📏 Distance to ${connection.from.name}->${connection.to.name}: ${distance.toFixed(2)}px`);
+                    
+                    if (distance < minDistance) {
+                        minDistance = distance;
+                        nearestEdge = connection;
+                    }
+                }
+                
+                console.log(`🎯 Nearest edge: ${nearestEdge?.from.name}->${nearestEdge?.to.name} at ${minDistance.toFixed(2)}px`);
+                return nearestEdge;
+            }
+
+            calculateDistanceToEdge(connection, clickX, clickY) {
+                const { from, to } = connection;
+                
+                // Handle self-connections (circles)
+                if (from === to) {
+                    return this.calculateDistanceToSelfConnection(connection, clickX, clickY);
+                }
+                
+                // Calculate distance to line segment
+                const fromX = from.x + 30; // Node center
+                const fromY = from.y + 30;
+                const toX = to.x + 30;
+                const toY = to.y + 30;
+                
+                // Convert to canvas area coordinates
+                const x1 = fromX + this.panOffset.x - 2500;
+                const y1 = fromY + this.panOffset.y - 2500;
+                const x2 = toX + this.panOffset.x - 2500;
+                const y2 = toY + this.panOffset.y - 2500;
+                
+                return this.distanceToLineSegment(clickX, clickY, x1, y1, x2, y2);
+            }
+
+            calculateDistanceToSelfConnection(connection, clickX, clickY) {
+                const { from } = connection;
+                const nodeEdgeDir = this.calculateNodeEdgeDirection(from);
+                const angle = Math.atan2(-nodeEdgeDir.y, -nodeEdgeDir.x);
+                
+                const radius = 40;
+                const fromX = from.x + 30;
+                const fromY = from.y + 30;
+                const offsetX = Math.cos(angle) * radius;
+                const offsetY = Math.sin(angle) * radius;
+                
+                const centerX = fromX + offsetX + this.panOffset.x - 2500;
+                const centerY = fromY + offsetY + this.panOffset.y - 2500;
+                
+                // Distance from click point to circle center
+                const dx = clickX - centerX;
+                const dy = clickY - centerY;
+                const distanceToCenter = Math.sqrt(dx * dx + dy * dy);
+                
+                // Distance to circle edge
+                return Math.abs(distanceToCenter - radius);
+            }
+
+            distanceToLineSegment(px, py, x1, y1, x2, y2) {
+                // Calculate distance from point (px, py) to line segment (x1,y1)-(x2,y2)
+                const A = px - x1;
+                const B = py - y1;
+                const C = x2 - x1;
+                const D = y2 - y1;
+                
+                const dot = A * C + B * D;
+                const lenSq = C * C + D * D;
+                
+                if (lenSq === 0) {
+                    // Line segment is actually a point
+                    return Math.sqrt(A * A + B * B);
+                }
+                
+                let param = dot / lenSq;
+                
+                let xx, yy;
+                
+                if (param < 0) {
+                    xx = x1;
+                    yy = y1;
+                } else if (param > 1) {
+                    xx = x2;
+                    yy = y2;
+                } else {
+                    xx = x1 + param * C;
+                    yy = y1 + param * D;
+                }
+                
+                const dx = px - xx;
+                const dy = py - yy;
+                return Math.sqrt(dx * dx + dy * dy);
+            }
+
+            setupEventListeners() {
+                // Add comprehensive click logging
+                document.addEventListener('click', this.logClick.bind(this), true);
+                
+                // Canvas events - attach to both canvas area and canvas for proper event handling
+                this.canvasArea.addEventListener('mousedown', this.handleMouseDown.bind(this));
+                this.canvas.addEventListener('mousedown', this.handleMouseDown.bind(this));
+                this.canvasArea.addEventListener('contextmenu', this.handleContextMenu.bind(this));
+                this.canvas.addEventListener('contextmenu', this.handleContextMenu.bind(this));
+
+                // Document events for mouse tracking outside canvas
+                document.addEventListener('mousemove', this.handleMouseMove.bind(this));
+                document.addEventListener('mouseup', this.handleMouseUp.bind(this));
+
+                // File drag and drop
+                const dropZone = document.getElementById('dropZone');
+                const fileInput = document.getElementById('fileInput');
+
+                dropZone.addEventListener('click', () => fileInput.click());
+                dropZone.addEventListener('dragover', this.handleDragOver.bind(this));
+                dropZone.addEventListener('drop', this.handleFileDrop.bind(this));
+                fileInput.addEventListener('change', this.handleFileSelect.bind(this));
+
+                // Prevent default drag behavior on canvas
+                this.canvasArea.addEventListener('dragover', e => e.preventDefault());
+                this.canvasArea.addEventListener('drop', e => e.preventDefault());
+            }
+
+            handleDragOver(e) {
+                e.preventDefault();
+                e.currentTarget.classList.add('dragover');
+            }
+
+            handleFileDrop(e) {
+                e.preventDefault();
+                e.currentTarget.classList.remove('dragover');
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    this.loadFile(files[0]);
+                }
+            }
+
+            handleFileSelect(e) {
+                if (e.target.files.length > 0) {
+                    this.loadFile(e.target.files[0]);
+                }
+            }
+
+            loadFile(file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    this.parseGraph(e.target.result);
+                    document.getElementById('fileName').textContent = file.name;
+                };
+                reader.readAsText(file);
+            }
+
+            parseGraph(text) {
+                this.clearGraph();
+                const lines = text.split('\n');
+                
+                // First pass: parse connections
+                for (const line of lines) {
+                    const trimmed = line.trim();
+                    if (!trimmed || trimmed.startsWith('#')) continue;
+
+                    const connectionMatch = trimmed.match(/(\w+)\s*(--|->|>>|\*>)\s*(\w+)/);
+                    if (connectionMatch) {
+                        const [, from, connector, to] = connectionMatch;
+                        
+                        // Create nodes if they don't exist
+                        if (!this.nodes.has(from)) {
+                            this.createNode(from, Math.random() * 400 + 100, Math.random() * 400 + 100);
+                        }
+                        if (!this.nodes.has(to)) {
+                            this.createNode(to, Math.random() * 400 + 100, Math.random() * 400 + 100);
+                        }
+
+                        // Determine connection type
+                        let type = 'undirected';
+                        switch (connector) {
+                            case '->': type = 'directed'; break;
+                            case '>>': type = 'shortcut'; break;
+                            case '*>': type = 'mechanism'; break;
+                        }
+
+                        this.createConnection(from, to, type);
+                    }
+                }
+
+                // Second pass: parse node properties
+                for (const line of lines) {
+                    const trimmed = line.trim();
+                    if (!trimmed.startsWith('#')) continue;
+
+                    const nodeMatch = trimmed.match(/#\s*(\w+)\s+pos:\(([^,]+),([^)]+)\)\s+type:(\w+)\s+weight:([^\s]+)/);
+                    if (nodeMatch) {
+                        const [, name, x, y, type, weight] = nodeMatch;
+                        if (this.nodes.has(name)) {
+                            const node = this.nodes.get(name);
+                            node.x = parseFloat(x) * 50 + 300; // Scale and center in visible area
+                            node.y = parseFloat(y) * -50 + 300; // Flip Y and scale
+                            node.type = type;
+                            node.weight = parseFloat(weight);
+                            this.updateNodeElement(node);
+                        }
+                    }
+                }
+
+                // Update all connections after node positions have been set
+                this.updateAllConnections();
+                this.updateOutput();
+            }
+
+            clearGraph() {
+                for (const [id, node] of this.nodes) {
+                    node.element.remove();
+                }
+                for (const [id, connection] of this.connections) {
+                    connection.element.remove();
+                }
+                this.nodes.clear();
+                this.connections.clear();
+                this.selectedNode = null;
+                this.selectedConnection = null;
+                this.hideEditors();
+            }
+
+            createNode(name, x, y, type = 'poi', weight = 1) {
+                const element = document.createElement('div');
+                element.className = `node ${type}`;
+                element.textContent = name;
+                element.style.left = x + 'px';
+                element.style.top = y + 'px';
+                element.style.position = 'absolute';
+                element.style.zIndex = '10';
+
+                // Create connection handles
+                const handles = this.createConnectionHandles();
+                handles.forEach(handle => element.appendChild(handle));
+
+                const node = {
+                    id: name,
+                    name,
+                    x,
+                    y,
+                    type,
+                    weight,
+                    element,
+                    handles
+                };
+
+                element.addEventListener('mousedown', (e) => {
+                    e.stopPropagation();
+                    if (e.shiftKey) {
+                        this.startConnection(node);
+                    } else {
+                        this.selectNode(node);
+                        this.isDraggingNode = true;
+                        this.draggingNode = node;
+                        this.lastMousePos = { x: e.clientX, y: e.clientY };
+                        // Disable transitions during dragging
+                        element.classList.add('dragging');
+                    }
+                });
+
+                // Add mouse events for connection handle positioning
+                element.addEventListener('mouseenter', (e) => {
+                    this.updateConnectionHandle(node, e);
+                });
+
+                element.addEventListener('mousemove', (e) => {
+                    this.updateConnectionHandle(node, e);
+                });
+
+                element.addEventListener('mouseleave', (e) => {
+                    if (node.handles[0] && !this.isDraggingHandle) {
+                        node.handles[0].style.opacity = '0';
+                    }
+                });
+
+                // Handle click on the connection handle
+                handles[0].addEventListener('mousedown', (e) => {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    this.startHandleDrag(handles[0], node, e);
+                });
+
+                this.canvas.appendChild(element);
+                this.nodes.set(name, node);
+                return node;
+            }
+
+            createConnectionHandles() {
+                // Create a single connection handle
+                const handle = document.createElement('div');
+                handle.className = 'connection-handle';
+                
+                return [handle];
+            }
+
+            createConnection(fromName, toName, type = 'undirected') {
+                const fromNode = this.nodes.get(fromName);
+                const toNode = this.nodes.get(toName);
+                if (!fromNode || !toNode) return null;
+
+                const id = `${fromName}-${toName}`;
+                if (this.connections.has(id)) return this.connections.get(id);
+
+                const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+                svg.setAttribute('class', `connection ${type}`);
+                svg.style.position = 'absolute';
+                svg.style.pointerEvents = 'auto';
+
+                const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                line.setAttribute('class', 'connection-line');
+                
+                // Add thick invisible line for easier clicking
+                const clickLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                clickLine.style.stroke = 'transparent';
+                clickLine.style.strokeWidth = '10';
+                clickLine.style.cursor = 'pointer';
+                
+                svg.appendChild(clickLine);
+                svg.appendChild(line);
+
+                // Add markers for different edge types
+                if (type !== 'undirected') {
+                    const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+                    
+                    if (type === 'directed') {
+                        // Directed: single arrow at middle
+                        const marker = document.createElementNS('http://www.w3.org/2000/svg', 'marker');
+                        marker.setAttribute('id', `arrow-${id}`);
+                        marker.setAttribute('markerWidth', '16');
+                        marker.setAttribute('markerHeight', '16');
+                        marker.setAttribute('refX', '8');
+                        marker.setAttribute('refY', '5');
+                        marker.setAttribute('orient', 'auto');
+                        marker.setAttribute('markerUnits', 'strokeWidth');
+
+                        const polygon = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+                        polygon.setAttribute('points', '0,0 0,10 15,5');
+                        polygon.setAttribute('fill', '#666'); // Match default edge color
+
+                        marker.appendChild(polygon);
+                        defs.appendChild(marker);
+                        line.setAttribute('marker-mid', `url(#arrow-${id})`);
+                    } else if (type === 'shortcut') {
+                        // Shortcut: two hollow arrows at middle
+                        const marker1 = document.createElementNS('http://www.w3.org/2000/svg', 'marker');
+                        marker1.setAttribute('id', `hollow-arrow1-${id}`);
+                        marker1.setAttribute('markerWidth', '16');
+                        marker1.setAttribute('markerHeight', '16');
+                        marker1.setAttribute('refX', '8');
+                        marker1.setAttribute('refY', '5');
+                        marker1.setAttribute('orient', 'auto');
+
+                        const polygon1 = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+                        polygon1.setAttribute('points', '0,0 0,10 15,5');
+                        polygon1.setAttribute('fill', 'none');
+                        polygon1.setAttribute('stroke', '#00bcd4'); // Match shortcut edge color
+                        polygon1.setAttribute('stroke-width', '2');
+
+                        marker1.appendChild(polygon1);
+                        defs.appendChild(marker1);
+                        
+                        const marker2 = document.createElementNS('http://www.w3.org/2000/svg', 'marker');
+                        marker2.setAttribute('id', `hollow-arrow2-${id}`);
+                        marker2.setAttribute('markerWidth', '16');
+                        marker2.setAttribute('markerHeight', '16');
+                        marker2.setAttribute('refX', '8');
+                        marker2.setAttribute('refY', '5');
+                        marker2.setAttribute('orient', 'auto');
+
+                        const polygon2 = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+                        polygon2.setAttribute('points', '0,0 0,10 15,5');
+                        polygon2.setAttribute('fill', 'none');
+                        polygon2.setAttribute('stroke', '#00bcd4'); // Match shortcut edge color
+                        polygon2.setAttribute('stroke-width', '2');
+
+                        marker2.appendChild(polygon2);
+                        defs.appendChild(marker2);
+                        
+                        line.setAttribute('marker-mid', `url(#hollow-arrow1-${id})`);
+                    } else if (type === 'mechanism') {
+                        // Mechanism: one arrow and one dot at middle
+                        const arrowMarker = document.createElementNS('http://www.w3.org/2000/svg', 'marker');
+                        arrowMarker.setAttribute('id', `mech-arrow-${id}`);
+                        arrowMarker.setAttribute('markerWidth', '16');
+                        arrowMarker.setAttribute('markerHeight', '16');
+                        arrowMarker.setAttribute('refX', '8');
+                        arrowMarker.setAttribute('refY', '5');
+                        arrowMarker.setAttribute('orient', 'auto');
+
+                        const arrowPolygon = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+                        arrowPolygon.setAttribute('points', '0,0 0,10 15,5');
+                        arrowPolygon.setAttribute('fill', '#ff5722'); // Match mechanism edge color
+
+                        arrowMarker.appendChild(arrowPolygon);
+                        defs.appendChild(arrowMarker);
+                        
+                        const dotMarker = document.createElementNS('http://www.w3.org/2000/svg', 'marker');
+                        dotMarker.setAttribute('id', `mech-dot-${id}`);
+                        dotMarker.setAttribute('markerWidth', '10');
+                        dotMarker.setAttribute('markerHeight', '10');
+                        dotMarker.setAttribute('refX', '5');
+                        dotMarker.setAttribute('refY', '5');
+                        dotMarker.setAttribute('orient', 'auto');
+
+                        const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                        circle.setAttribute('cx', '5');
+                        circle.setAttribute('cy', '5');
+                        circle.setAttribute('r', '3');
+                        circle.setAttribute('fill', '#ff5722'); // Match mechanism edge color
+
+                        dotMarker.appendChild(circle);
+                        defs.appendChild(dotMarker);
+                        
+                        line.setAttribute('marker-mid', `url(#mech-arrow-${id})`);
+                    }
+                    
+                    svg.appendChild(defs);
+                }
+
+                const connection = {
+                    id,
+                    from: fromNode,
+                    to: toNode,
+                    type,
+                    element: svg,
+                    markerIds: this.getMarkerIds(type, id)
+                };
+
+                // Note: Connection click handling now done globally with nearest-edge detection
+
+                this.canvas.appendChild(svg);
+                this.connections.set(id, connection);
+                this.updateConnection(connection);
+                return connection;
+            }
+
+            getMarkerIds(type, id) {
+                switch(type) {
+                    case 'directed':
+                        return { main: `url(#arrow-${id})` };
+                    case 'shortcut':
+                        return { main: `url(#hollow-arrow1-${id})`, secondary: `url(#hollow-arrow2-${id})` };
+                    case 'mechanism':
+                        return { main: `url(#mech-arrow-${id})`, secondary: `url(#mech-dot-${id})` };
+                    default:
+                        return {};
+                }
+            }
+
+            calculateNodeEdgeDirection(node) {
+                let directionSum = { x: 0, y: 0 };
+                
+                // Sum up direction vectors from all regular (non-self) connections
+                for (const [id, connection] of this.connections) {
+                    if (connection.from !== connection.to) { // Skip self-connections
+                        if (connection.from === node) {
+                            // Edge going from this node to another
+                            const dir = {
+                                x: connection.to.x - connection.from.x,
+                                y: connection.to.y - connection.from.y
+                            };
+                            const length = Math.sqrt(dir.x * dir.x + dir.y * dir.y);
+                            if (length > 0) {
+                                directionSum.x += dir.x / length;
+                                directionSum.y += dir.y / length;
+                            }
+                        } else if (connection.to === node) {
+                            // Edge coming to this node from another
+                            const dir = {
+                                x: connection.from.x - connection.to.x,
+                                y: connection.from.y - connection.to.y
+                            };
+                            const length = Math.sqrt(dir.x * dir.x + dir.y * dir.y);
+                            if (length > 0) {
+                                directionSum.x += dir.x / length;
+                                directionSum.y += dir.y / length;
+                            }
+                        }
+                    }
+                }
+                
+                // If no other edges, default to upward direction
+                if (directionSum.x === 0 && directionSum.y === 0) {
+                    return { x: 0, y: -1 };
+                }
+                
+                return directionSum;
+            }
+
+            updateConnection(connection) {
+                const { from, to, element, type } = connection;
+                const line = element.querySelector('.connection-line');
+                const clickLine = element.querySelectorAll('line')[0]; // First line is the click line
+
+                const fromX = from.x + 30;
+                const fromY = from.y + 30;
+                const toX = to.x + 30;
+                const toY = to.y + 30;
+
+                // Handle self-connections (node connecting to itself)
+                if (from === to) {
+                    // Calculate the direction opposite to other edges for this node
+                    const nodeEdgeDir = this.calculateNodeEdgeDirection(from);
+                    
+                    // Use opposite direction for self-connection positioning
+                    const angle = Math.atan2(-nodeEdgeDir.y, -nodeEdgeDir.x);
+                    
+                    // Create a curved path for self-connection
+                    const radius = 40;
+                    const offsetX = Math.cos(angle) * radius;
+                    const offsetY = Math.sin(angle) * radius;
+                    
+                    const centerX = fromX + offsetX;
+                    const centerY = fromY + offsetY;
+                    
+                    element.style.left = (centerX - radius - 10) + 'px';
+                    element.style.top = (centerY - radius - 10) + 'px';
+                    element.style.width = (radius * 2 + 20) + 'px';
+                    element.style.height = (radius * 2 + 20) + 'px';
+                    element.setAttribute('viewBox', `0 0 ${radius * 2 + 20} ${radius * 2 + 20}`);
+
+                    // Remove the line and add a circle instead
+                    line.style.display = 'none';
+                    clickLine.style.display = 'none';
+                    
+                    let circle = element.querySelector('.self-connection-circle');
+                    if (!circle) {
+                        circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                        circle.setAttribute('class', 'self-connection-circle');
+                        element.appendChild(circle);
+                        
+                        const clickCircle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                        clickCircle.style.stroke = 'transparent';
+                        clickCircle.style.strokeWidth = '10';
+                        clickCircle.style.fill = 'none';
+                        clickCircle.style.cursor = 'pointer';
+                        element.appendChild(clickCircle);
+                    }
+                    
+                    const cx = radius + 10;
+                    const cy = radius + 10;
+                    circle.setAttribute('cx', cx);
+                    circle.setAttribute('cy', cy);
+                    circle.setAttribute('r', radius);
+                    circle.setAttribute('fill', 'none');
+                    circle.setAttribute('stroke', '#333');
+                    circle.setAttribute('stroke-width', '2');
+                    
+                    const clickCircle = element.querySelector('circle:last-child');
+                    clickCircle.setAttribute('cx', cx);
+                    clickCircle.setAttribute('cy', cy);
+                    clickCircle.setAttribute('r', radius);
+                    
+                    // Add markers for self-connections
+                    if (type !== 'undirected') {
+                        let markerToUse = '';
+                        if (connection.markerIds && connection.markerIds.main) {
+                            markerToUse = connection.markerIds.main;
+                        } else {
+                            // Fallback: reconstruct marker based on type
+                            const markerIds = this.getMarkerIds(type, connection.id);
+                            if (markerIds.main) {
+                                markerToUse = markerIds.main;
+                                // Update connection object for future use
+                                connection.markerIds = markerIds;
+                            }
+                        }
+                        
+                        if (markerToUse) {
+                            // Position marker at top of circle for visibility
+                            circle.setAttribute('marker-start', markerToUse);
+                        }
+                    }
+                } else {
+                    // Regular connection between different nodes
+                    const minX = Math.min(fromX, toX);
+                    const minY = Math.min(fromY, toY);
+                    const width = Math.abs(toX - fromX) + 20;
+                    const height = Math.abs(toY - fromY) + 20;
+
+                    element.style.left = (minX - 10) + 'px';
+                    element.style.top = (minY - 10) + 'px';
+                    element.style.width = width + 'px';
+                    element.style.height = height + 'px';
+                    element.setAttribute('viewBox', `0 0 ${width} ${height}`);
+
+                    const x1 = fromX - minX + 10;
+                    const y1 = fromY - minY + 10;
+                    const x2 = toX - minX + 10;
+                    const y2 = toY - minY + 10;
+
+                    // Show lines and hide circle for regular connections
+                    line.style.display = '';
+                    clickLine.style.display = '';
+                    const selfCircle = element.querySelector('.self-connection-circle');
+                    if (selfCircle) {
+                        selfCircle.style.display = 'none';
+                    }
+
+                    // Update both lines
+                    line.setAttribute('x1', x1);
+                    line.setAttribute('y1', y1);
+                    line.setAttribute('x2', x2);
+                    line.setAttribute('y2', y2);
+                    
+                    clickLine.setAttribute('x1', x1);
+                    clickLine.setAttribute('y1', y1);
+                    clickLine.setAttribute('x2', x2);
+                    clickLine.setAttribute('y2', y2);
+
+                    // For markers at middle, we need to add a path with a midpoint
+                    if (type !== 'undirected') {
+                        const midX = (x1 + x2) / 2;
+                        const midY = (y1 + y2) / 2;
+                        
+                        // Create path with midpoint for marker placement
+                        let path = element.querySelector('.marker-path');
+                        if (!path) {
+                            path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                            path.setAttribute('class', 'marker-path');
+                            path.style.fill = 'none';
+                            path.style.stroke = 'transparent';
+                            path.style.strokeWidth = '1';
+                            element.appendChild(path);
+                        }
+                        
+                        path.setAttribute('d', `M ${x1} ${y1} L ${midX} ${midY} L ${x2} ${y2}`);
+                        
+                        // Apply markers to path using stored marker IDs
+                        if (connection.markerIds && connection.markerIds.main) {
+                            path.setAttribute('marker-mid', connection.markerIds.main);
+                        } else {
+                            // Fallback: try to get marker from line or reconstruct based on type
+                            const existingMarker = line.getAttribute('marker-mid');
+                            if (existingMarker) {
+                                path.setAttribute('marker-mid', existingMarker);
+                            } else {
+                                // Reconstruct marker based on type and connection ID
+                                const markerIds = this.getMarkerIds(type, connection.id);
+                                if (markerIds.main) {
+                                    path.setAttribute('marker-mid', markerIds.main);
+                                    // Update connection object for future use
+                                    connection.markerIds = markerIds;
+                                }
+                            }
+                        }
+                        
+                        // Remove markers from line to avoid duplication
+                        line.removeAttribute('marker-mid');
+                    } else {
+                        // For undirected connections, remove any marker path
+                        const path = element.querySelector('.marker-path');
+                        if (path) {
+                            path.remove();
+                        }
+                    }
+                }
+
+                // Make connection clickable
+                element.style.pointerEvents = 'auto';
+            }
+
+            updateAllConnections() {
+                for (const [id, connection] of this.connections) {
+                    this.updateConnection(connection);
+                }
+            }
+
+            selectNode(node) {
+                // Deselect all
+                this.selectedNode = null;
+                this.selectedConnection = null;
+                for (const [id, n] of this.nodes) {
+                    n.element.classList.remove('selected');
+                }
+                for (const [id, c] of this.connections) {
+                    c.element.classList.remove('selected');
+                }
+
+                // Select node
+                this.selectedNode = node;
+                node.element.classList.add('selected');
+                this.showNodeEditor(node);
+            }
+
+            selectConnection(connection) {
+                // Deselect all
+                this.selectedNode = null;
+                this.selectedConnection = null;
+                for (const [id, n] of this.nodes) {
+                    n.element.classList.remove('selected');
+                }
+                for (const [id, c] of this.connections) {
+                    c.element.classList.remove('selected');
+                }
+
+                // Select connection
+                this.selectedConnection = connection;
+                connection.element.classList.add('selected');
+                this.showConnectionEditor(connection);
+            }
+
+            startConnection(node) {
+                this.isConnecting = true;
+                this.connectingFrom = node;
+                this.canvas.style.cursor = 'crosshair';
+                
+                // Create initial temp connection at node position
+                const nodeRect = node.element.getBoundingClientRect();
+                this.createTempConnection(nodeRect.left + nodeRect.width / 2, nodeRect.top + nodeRect.height / 2);
+            }
+
+            updateConnectionHandle(node, e) {
+                if (this.isDraggingNode || this.isDraggingHandle) return;
+                
+                const handle = node.handles[0];
+                if (!handle) return;
+                
+                const nodeRect = node.element.getBoundingClientRect();
+                const canvasRect = this.canvas.getBoundingClientRect();
+                
+                // Convert screen coordinates to canvas coordinates
+                const mouseX = e.clientX - canvasRect.left;
+                const mouseY = e.clientY - canvasRect.top;
+                
+                // Calculate direction from node center to mouse (in canvas coordinates)
+                const nodeCenterX = node.x + 30; // Node center in canvas coordinates
+                const nodeCenterY = node.y + 30;
+                
+                const dirX = mouseX - nodeCenterX;
+                const dirY = mouseY - nodeCenterY;
+                const distance = Math.sqrt(dirX * dirX + dirY * dirY);
+                
+                if (distance > 0) {
+                    // Normalize direction and position handle at edge
+                    const normalizedX = dirX / distance;
+                    const normalizedY = dirY / distance;
+                    
+                    const radius = 30; // Node radius
+                    const handleX = normalizedX * radius + 30; // 30 is node center offset
+                    const handleY = normalizedY * radius + 30;
+                    
+                    handle.style.left = handleX + 'px';
+                    handle.style.top = handleY + 'px';
+                    handle.style.opacity = '1';
+                }
+            }
+
+            startHandleDrag(handle, node, e) {
+                this.isDraggingHandle = true;
+                this.draggingHandle = handle;
+                handle.classList.add('dragging');
+                
+                // Set the source node
+                this.connectingFrom = node;
+                
+                // Create temporary connection line
+                this.createTempConnection(e.clientX, e.clientY);
+                
+                this.lastMousePos = { x: e.clientX, y: e.clientY };
+                e.preventDefault();
+            }
+
+            findNodeByElement(element) {
+                for (const [name, node] of this.nodes) {
+                    if (node.element === element) {
+                        return node;
+                    }
+                }
+                return null;
+            }
+
+            createTempConnection(x, y) {
+                if (this.tempConnection) {
+                    this.tempConnection.remove();
+                }
+
+                const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+                svg.style.position = 'absolute';
+                svg.style.left = '0px';
+                svg.style.top = '0px';
+                svg.style.width = '100%';
+                svg.style.height = '100%';
+                svg.style.pointerEvents = 'none';
+                svg.style.zIndex = '20';
+
+                const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                line.setAttribute('class', 'temp-connection-line');
+                
+                // Start from node center
+                const nodeRect = this.connectingFrom.element.getBoundingClientRect();
+                const canvasAreaRect = this.canvasArea.getBoundingClientRect();
+                
+                const startX = nodeRect.left - canvasAreaRect.left + nodeRect.width / 2;
+                const startY = nodeRect.top - canvasAreaRect.top + nodeRect.height / 2;
+                
+                line.setAttribute('x1', startX);
+                line.setAttribute('y1', startY);
+                line.setAttribute('x2', x - canvasAreaRect.left);
+                line.setAttribute('y2', y - canvasAreaRect.top);
+
+                svg.appendChild(line);
+                this.canvasArea.appendChild(svg);
+                this.tempConnection = svg;
+            }
+
+            updateTempConnection(x, y) {
+                if (!this.tempConnection) return;
+                
+                const line = this.tempConnection.querySelector('.temp-connection-line');
+                const canvasAreaRect = this.canvasArea.getBoundingClientRect();
+                
+                line.setAttribute('x2', x - canvasAreaRect.left);
+                line.setAttribute('y2', y - canvasAreaRect.top);
+            }
+
+            removeTempConnection() {
+                if (this.tempConnection) {
+                    this.tempConnection.remove();
+                    this.tempConnection = null;
+                }
+            }
+
+            handleMouseDown(e) {
+                this.lastMousePos = { x: e.clientX, y: e.clientY };
+                
+                // Only start canvas dragging if the click is directly on canvas or canvas area
+                // AND not on any child elements (nodes, connections, etc.)
+                if ((e.target === this.canvasArea || e.target === this.canvas) && 
+                    !e.target.closest('.node') && 
+                    !e.target.closest('.connection')) {
+                    this.isDragging = true;
+                    this.canvasArea.classList.add('dragging');
+                    this.hideEditors();
+                }
+            }
+
+            handleMouseMove(e) {
+                const deltaX = e.clientX - this.lastMousePos.x;
+                const deltaY = e.clientY - this.lastMousePos.y;
+
+                if (this.isDraggingHandle) {
+                    // Handle dragging - update temp connection
+                    this.updateTempConnection(e.clientX, e.clientY);
+                } else if (this.isConnecting && this.connectingFrom) {
+                    // Shift+click connection mode - update temp connection
+                    this.updateTempConnection(e.clientX, e.clientY);
+                } else if (this.isDraggingNode && this.draggingNode) {
+                    // Node dragging with immediate update
+                    this.draggingNode.x += deltaX;
+                    this.draggingNode.y += deltaY;
+                    this.updateNodeElement(this.draggingNode);
+                    this.updateAllConnections();
+                    this.updateNodeEditor();
+                } else if (this.isDragging) {
+                    // Canvas panning
+                    this.panOffset.x += deltaX;
+                    this.panOffset.y += deltaY;
+                    this.updateCanvasPosition();
+                }
+
+                this.lastMousePos = { x: e.clientX, y: e.clientY };
+            }
+
+            handleMouseUp(e) {
+                if (this.isDraggingHandle) {
+                    // Handle connection creation
+                    const targetElement = document.elementFromPoint(e.clientX, e.clientY);
+                    let targetNode = null;
+                    
+                    // Check if we're over a node
+                    if (targetElement) {
+                        if (targetElement.classList.contains('node')) {
+                            targetNode = this.findNodeByElement(targetElement);
+                        } else {
+                            const nodeElement = targetElement.closest('.node');
+                            if (nodeElement) {
+                                targetNode = this.findNodeByElement(nodeElement);
+                            }
+                        }
+                    }
+                    
+                    if (targetNode) {
+                        this.createConnection(this.connectingFrom.name, targetNode.name, 'directed');
+                        this.updateOutput();
+                    }
+                    
+                    // Clean up handle dragging
+                    this.isDraggingHandle = false;
+                    if (this.draggingHandle) {
+                        this.draggingHandle.classList.remove('dragging');
+                        this.draggingHandle.style.opacity = '0';
+                        this.draggingHandle = null;
+                    }
+                    this.removeTempConnection();
+                    this.connectingFrom = null;
+                } else if (this.isConnecting && this.connectingFrom) {
+                    const targetElement = document.elementFromPoint(e.clientX, e.clientY);
+                    if (targetElement && targetElement.classList.contains('node')) {
+                        const targetName = targetElement.textContent;
+                        const targetNode = this.nodes.get(targetName);
+                        if (targetNode) {
+                            this.createConnection(this.connectingFrom.name, targetNode.name, 'undirected');
+                            this.updateOutput();
+                        }
+                    }
+                    this.isConnecting = false;
+                    this.connectingFrom = null;
+                    this.removeTempConnection();
+                    this.canvas.style.cursor = 'grab';
+                }
+
+                // Stop dragging
+                this.isDragging = false;
+                if (this.isDraggingNode && this.draggingNode) {
+                    // Re-enable transitions
+                    this.draggingNode.element.classList.remove('dragging');
+                }
+                this.isDraggingNode = false;
+                this.draggingNode = null;
+                this.canvasArea.classList.remove('dragging');
+            }
+
+            handleContextMenu(e) {
+                e.preventDefault();
+                // Only show context menu if clicking directly on canvas/canvas area, not on nodes
+                if ((e.target === this.canvasArea || e.target === this.canvas) && 
+                    !e.target.closest('.node') && 
+                    !e.target.closest('.connection')) {
+                    const rect = this.canvasArea.getBoundingClientRect();
+                    // Convert screen coordinates to canvas coordinates
+                    // Account for the canvas being translated by panOffset
+                    const x = e.clientX - rect.left - this.panOffset.x + 2500;
+                    const y = e.clientY - rect.top - this.panOffset.y + 2500;
+                    this.showContextMenu(e.clientX, e.clientY, { x, y });
+                }
+            }
+
+            showContextMenu(screenX, screenY, canvasPos) {
+                const menu = document.createElement('div');
+                menu.className = 'context-menu';
+                menu.style.left = screenX + 'px';
+                menu.style.top = screenY + 'px';
+
+                const createNodeItem = document.createElement('div');
+                createNodeItem.className = 'context-menu-item';
+                createNodeItem.textContent = 'Create Node';
+                createNodeItem.addEventListener('click', () => {
+                    const name = `Node${++this.nodeCounter}`;
+                    this.createNode(name, canvasPos.x, canvasPos.y);
+                    this.updateOutput();
+                    menu.remove();
+                });
+
+                menu.appendChild(createNodeItem);
+                document.body.appendChild(menu);
+
+                // Remove menu when clicking elsewhere
+                setTimeout(() => {
+                    document.addEventListener('click', function removeMenu() {
+                        menu.remove();
+                        document.removeEventListener('click', removeMenu);
+                    });
+                }, 0);
+            }
+
+            updateCanvasPosition() {
+                // Apply transform to the canvas within the canvas area
+                this.canvas.style.transform = `translate(${this.panOffset.x}px, ${this.panOffset.y}px)`;
+            }
+
+            updateNodeElement(node) {
+                node.element.style.left = node.x + 'px';
+                node.element.style.top = node.y + 'px';
+                
+                // Update node type classes while preserving state classes
+                node.element.classList.remove('poi', 'start', 'save', 'boss');
+                node.element.classList.add(node.type);
+                
+                if (node === this.selectedNode) {
+                    node.element.classList.add('selected');
+                }
+            }
+
+            showNodeEditor(node) {
+                document.getElementById('nodeEditor').style.display = 'block';
+                document.getElementById('connectionEditor').style.display = 'none';
+                document.getElementById('nodeName').value = node.name;
+                document.getElementById('nodeType').value = node.type;
+                document.getElementById('nodeWeight').value = node.weight;
+                document.getElementById('nodeX').value = ((node.x - 300) / 50).toFixed(2);
+                document.getElementById('nodeY').value = (-(node.y - 300) / 50).toFixed(2);
+            }
+
+            showConnectionEditor(connection) {
+                document.getElementById('nodeEditor').style.display = 'none';
+                document.getElementById('connectionEditor').style.display = 'block';
+                document.getElementById('connectionType').value = connection.type;
+            }
+
+            hideEditors() {
+                document.getElementById('nodeEditor').style.display = 'none';
+                document.getElementById('connectionEditor').style.display = 'none';
+            }
+
+            updateNodeEditor() {
+                if (this.selectedNode) {
+                    document.getElementById('nodeX').value = ((this.selectedNode.x - 300) / 50).toFixed(2);
+                    document.getElementById('nodeY').value = (-(this.selectedNode.y - 300) / 50).toFixed(2);
+                }
+            }
+
+            updateOutput() {
+                const lines = [];
+                
+                // Add connections
+                for (const [id, connection] of this.connections) {
+                    const { from, to, type } = connection;
+                    let connector = '--';
+                    switch (type) {
+                        case 'directed': connector = '->'; break;
+                        case 'shortcut': connector = '>>'; break;
+                        case 'mechanism': connector = '*>'; break;
+                    }
+                    lines.push(`${from.name}${connector}${to.name}`);
+                }
+
+                lines.push(''); // Empty line
+
+                // Add node definitions
+                for (const [name, node] of this.nodes) {
+                    const x = ((node.x - 300) / 50).toFixed(2);
+                    const y = (-(node.y - 300) / 50).toFixed(2);
+                    lines.push(`#${node.name} pos:(${x},${y}) type:${node.type} weight:${node.weight}`);
+                }
+
+                document.getElementById('outputText').value = lines.join('\n');
+            }
+        }
+
+        // Global functions for buttons and events
+        let calculator = new NodeCalculator();
+
+        function newGraph() {
+            calculator.clearGraph();
+            calculator.updateOutput();
+            document.getElementById('fileName').textContent = 'Untitled Graph';
+        }
+
+        function updateSelectedNode() {
+            if (!calculator.selectedNode) return;
+            
+            const newName = document.getElementById('nodeName').value;
+            const newType = document.getElementById('nodeType').value;
+            const newWeight = parseFloat(document.getElementById('nodeWeight').value);
+
+            // Update connections if name changed
+            if (newName !== calculator.selectedNode.name) {
+                const oldName = calculator.selectedNode.name;
+                
+                // Update connections
+                const connectionsToUpdate = [];
+                for (const [id, connection] of calculator.connections) {
+                    if (connection.from.name === oldName || connection.to.name === oldName) {
+                        connectionsToUpdate.push(connection);
+                    }
+                }
+
+                // Remove old connections
+                for (const connection of connectionsToUpdate) {
+                    calculator.connections.delete(connection.id);
+                    connection.element.remove();
+                }
+
+                // Update node
+                calculator.nodes.delete(oldName);
+                calculator.selectedNode.name = newName;
+                calculator.selectedNode.id = newName;
+                calculator.nodes.set(newName, calculator.selectedNode);
+
+                // Recreate connections with new name
+                for (const connection of connectionsToUpdate) {
+                    const fromName = connection.from.name === oldName ? newName : connection.from.name;
+                    const toName = connection.to.name === oldName ? newName : connection.to.name;
+                    calculator.createConnection(fromName, toName, connection.type);
+                }
+            }
+
+            calculator.selectedNode.type = newType;
+            calculator.selectedNode.weight = newWeight;
+            calculator.selectedNode.element.textContent = newName;
+            calculator.updateNodeElement(calculator.selectedNode);
+            calculator.updateOutput();
+        }
+
+        function updateSelectedNodePosition() {
+            if (!calculator.selectedNode) return;
+            
+            const x = parseFloat(document.getElementById('nodeX').value);
+            const y = parseFloat(document.getElementById('nodeY').value);
+            
+            calculator.selectedNode.x = x * 50 + 300;
+            calculator.selectedNode.y = -y * 50 + 300;
+            calculator.updateNodeElement(calculator.selectedNode);
+            calculator.updateAllConnections();
+            calculator.updateOutput();
+        }
+
+        function updateSelectedConnection() {
+            if (!calculator.selectedConnection) return;
+            
+            const newType = document.getElementById('connectionType').value;
+            const connection = calculator.selectedConnection;
+            
+            // Remove old connection
+            calculator.connections.delete(connection.id);
+            connection.element.remove();
+            
+            // Create new connection with updated type
+            calculator.createConnection(connection.from.name, connection.to.name, newType);
+            calculator.selectConnection(calculator.connections.get(connection.id));
+            calculator.updateOutput();
+        }
+
+        function reverseConnection() {
+            if (!calculator.selectedConnection) return;
+            
+            const connection = calculator.selectedConnection;
+            const fromName = connection.from.name;
+            const toName = connection.to.name;
+            const type = connection.type;
+            
+            // Remove old connection
+            calculator.connections.delete(connection.id);
+            connection.element.remove();
+            
+            // Create new connection with reversed direction
+            const newConnection = calculator.createConnection(toName, fromName, type);
+            if (newConnection) {
+                calculator.selectConnection(newConnection);
+                calculator.updateOutput();
+            }
+        }
+
+        function exportGraph() {
+            const text = document.getElementById('outputText').value;
+            const blob = new Blob([text], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'graph.txt';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function calculateStability() {
+            const nodeCount = calculator.nodes.size;
+            if (nodeCount === 0) {
+                alert('No nodes in the graph');
+                return;
+            }
+
+            // Calculate 3rd order stability factor using the Unity algorithm
+            const stabilityFactor = calculateNthOrderStabilityFactor(3);
+            
+            alert(`Stability Factor: ${stabilityFactor.toFixed(6)}\n` +
+                  `Nodes: ${nodeCount}\n` +
+                  `Connections: ${calculator.connections.size}\n` +
+                  `Algorithm: N-th Order Cheeger (n=3)`);
+        }
+
+        function calculateNthOrderStabilityFactor(n) {
+            let top = 0;
+            let bottom = 0;
+            
+            for (let i = 1; i <= n; i++) {
+                const inv = 1 / factorial(i);
+                top += inv * calculateNthOrderCheeger(i);
+                bottom += inv;
+            }
+            
+            return top / bottom;
+        }
+
+        function calculateNthOrderCheeger(n) {
+            const vertices = Array.from(calculator.nodes.values());
+            const combinations = getCombinations(vertices, n);
+            let count = 0;
+            
+            for (const combination of combinations) {
+                // Create a copy of the graph without the vertices in this combination
+                const testGraph = cloneGraphWithoutVertices(combination);
+                
+                if (!isGraphConnected(testGraph)) {
+                    count++;
+                }
+            }
+            
+            return 1 - count / combinations.length;
+        }
+
+        function factorial(number) {
+            if (number <= 1) return 1;
+            let result = number;
+            for (let i = number - 1; i > 1; i--) {
+                result *= i;
+            }
+            return result;
+        }
+
+        function getCombinations(list, n) {
+            if (n <= 0 || n > list.length) {
+                return [];
+            }
+            
+            const results = [];
+            
+            function backtrack(start, current) {
+                if (current.length === n) {
+                    results.push([...current]);
+                    return;
+                }
+                
+                for (let i = start; i < list.length; i++) {
+                    current.push(list[i]);
+                    backtrack(i + 1, current);
+                    current.pop();
+                }
+            }
+            
+            backtrack(0, []);
+            return results;
+        }
+
+        function cloneGraphWithoutVertices(verticesToRemove) {
+            const remainingNodes = new Map();
+            const remainingConnections = new Map();
+            
+            // Add nodes that are not in the removal list
+            for (const [name, node] of calculator.nodes) {
+                if (!verticesToRemove.some(v => v.name === name)) {
+                    remainingNodes.set(name, node);
+                }
+            }
+            
+            // Add connections that connect remaining nodes
+            for (const [id, connection] of calculator.connections) {
+                const fromName = connection.from.name;
+                const toName = connection.to.name;
+                
+                if (remainingNodes.has(fromName) && remainingNodes.has(toName)) {
+                    remainingConnections.set(id, connection);
+                }
+            }
+            
+            return { nodes: remainingNodes, connections: remainingConnections };
+        }
+
+        function isGraphConnected(graph) {
+            const nodes = Array.from(graph.nodes.values());
+            if (nodes.length <= 1) return true;
+            
+            const visited = new Set();
+            const queue = [nodes[0].name];
+            visited.add(nodes[0].name);
+            
+            while (queue.length > 0) {
+                const currentNodeName = queue.shift();
+                
+                // Find all connections from this node
+                for (const connection of graph.connections.values()) {
+                    let neighborName = null;
+                    
+                    if (connection.from.name === currentNodeName) {
+                        neighborName = connection.to.name;
+                    } else if (connection.to.name === currentNodeName) {
+                        neighborName = connection.from.name;
+                    }
+                    
+                    if (neighborName && !visited.has(neighborName) && graph.nodes.has(neighborName)) {
+                        visited.add(neighborName);
+                        queue.push(neighborName);
+                    }
+                }
+            }
+            
+            return visited.size === nodes.length;
+        }
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && calculator.isConnecting) {
+                // Cancel connection mode
+                calculator.isConnecting = false;
+                calculator.connectingFrom = null;
+                calculator.removeTempConnection();
+                calculator.canvas.style.cursor = 'grab';
+            } else if (e.key === 'Delete' && calculator.selectedNode) {
+                // Delete selected node and its connections
+                const node = calculator.selectedNode;
+                
+                // Remove connections
+                const connectionsToDelete = [];
+                for (const [id, connection] of calculator.connections) {
+                    if (connection.from === node || connection.to === node) {
+                        connectionsToDelete.push(id);
+                    }
+                }
+                
+                for (const id of connectionsToDelete) {
+                    const connection = calculator.connections.get(id);
+                    connection.element.remove();
+                    calculator.connections.delete(id);
+                }
+                
+                // Remove node
+                node.element.remove();
+                calculator.nodes.delete(node.name);
+                calculator.selectedNode = null;
+                calculator.hideEditors();
+                calculator.updateOutput();
+            }
+            
+            if (e.key === 'Delete' && calculator.selectedConnection) {
+                // Delete selected connection
+                const connection = calculator.selectedConnection;
+                connection.element.remove();
+                calculator.connections.delete(connection.id);
+                calculator.selectedConnection = null;
+                calculator.hideEditors();
+                calculator.updateOutput();
+            }
+        });
+    </script>
+</body>
+</html>

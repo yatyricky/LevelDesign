@@ -1,0 +1,18 @@
+# Edge Types Test
+# Testing different edge types and self-connections
+
+# Nodes
+Node1 pos:(100,100) type:Add weight:1
+Node2 pos:(300,100) type:Multiply weight:1
+Node3 pos:(200,250) type:Subtract weight:1
+
+# Different edge types
+Node1->Node2  # Directed edge (arrow at middle)
+Node1--Node3  # Undirected edge (simple line)
+Node2>>Node3  # Shortcut edge (hollow arrows at middle)
+Node3*>Node1  # Mechanism edge (arrow + dot at middle)
+
+# Self-connections
+Node1->Node1  # Self-directed
+Node2--Node2  # Self-undirected
+Node3>>Node3  # Self-shortcut
