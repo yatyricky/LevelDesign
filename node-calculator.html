@@ -25,6 +25,35 @@
             display: flex;
             gap: 10px;
             align-items: center;
+            justify-content: space-between;
+        }
+
+        .header-left {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .header-right {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .header-link {
+            color: #007acc;
+            text-decoration: underline;
+            font-size: 12px;
+            padding: 0;
+            border: none;
+            background: none;
+            border-radius: 0;
+            transition: color 0.2s;
+        }
+
+        .header-link:hover {
+            color: #005a9e;
+            background: none;
         }
 
         .btn {
@@ -300,10 +329,15 @@
 </head>
 <body>
     <div class="header">
-        <button class="btn" onclick="newGraph()">New</button>
-        <button class="btn" onclick="calculateStability()">Calculate Stability</button>
-        <button class="btn" onclick="exportGraph()">Export</button>
-        <span style="margin-left: 20px; font-size: 12px;" id="fileName">Untitled Graph</span>
+        <div class="header-left">
+            <button class="btn" onclick="newGraph()">New</button>
+            <button class="btn" onclick="calculateStability()">Calculate Stability</button>
+            <button class="btn" onclick="exportGraph()">Export</button>
+            <span style="margin-left: 20px; font-size: 12px;" id="fileName">Untitled Graph</span>
+        </div>
+        <div class="header-right">
+            <a href="https://zhuanlan.zhihu.com/p/415025159" target="_blank" class="header-link">如何设计一张有“魂味”的地图？——论“类魂”游戏关卡的拓扑结构</a>
+        </div>
     </div>
 
     <div class="container">
