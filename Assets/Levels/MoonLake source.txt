@@ -16,11 +16,12 @@ UPavilion--Pavilion
 Pavilion--Woods
 Woods--Bank
 Bank--Dorm
-Dorm>>Woods
+Dorm--Chief
 Dorm--FullMoon
 FullMoon--UFullMoon
 UFullMoon>>UPavilion
-Dorm--Chief
+MidIsle--Chief
+Hall--Bank
 
 #Lift pos:(13.43,11.72) type:poi weight:1
 #PropMgr pos:(9.77,11.56) type:poi weight:1
