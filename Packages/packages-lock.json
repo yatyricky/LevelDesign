@@ -118,7 +118,7 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.probuilder": {
-      "version": "6.0.5",
+      "version": "6.0.9",
       "depth": 0,
       "source": "registry",
       "dependencies": {
